@@ -8,13 +8,13 @@
 const fs = require('fs');
 const path = require('path');
 const Papa = require('papaparse');
+require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-// Using service_role key to bypass RLS for backend testing
-const SUPABASE_URL = 'https://ifycpxtpyysuthnknptl.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmeWNweHRweXlzdXRobmtucHRsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQ3MDAwOSwiZXhwIjoyMDg2MDQ2MDA5fQ.WglLCsbCWVW3vtUsg3W756DKslV3wcCqKUaj8_5RGHA';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 const CSV_PATH = path.join(__dirname, '..', 'Test data', 'Toast_ItemSelectionDetails_from_Pizza.csv');
 const BATCH_SIZE = 300; // rows per RPC call

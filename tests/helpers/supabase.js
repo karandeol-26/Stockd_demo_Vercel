@@ -6,12 +6,13 @@
  * '9999-' year dates so it never collides with real data.
  * cleanTestData() only removes rows matching these markers.
  */
+require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = 'https://ifycpxtpyysuthnknptl.supabase.co';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmeWNweHRweXlzdXRobmtucHRsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQ3MDAwOSwiZXhwIjoyMDg2MDQ2MDA5fQ.WglLCsbCWVW3vtUsg3W756DKslV3wcCqKUaj8_5RGHA';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 // Test data markers
 const TEST_PREFIX = '__test__';

@@ -133,24 +133,27 @@ EVERYTHING DERIVES FROM sales_line_items:
 
 ## Module Tracker
 
-| Module | Name | Owner | Status | Notes |
-|--------|------|-------|--------|-------|
-| **M0** | Repo + Local Setup | DevOps/Lead | DONE | Supabase linked, CLI working |
-| **M1** | Supabase Schema | Backend | DONE | 6 tables, 2 enums, RLS, indexes |
-| **M2** | Ingestion (CSV Upload) | Frontend + Backend | IN PROGRESS | Backend RPC done, frontend UI pending |
-| **M3** | Consumption Engine | Backend | DONE | run_daily_close + reverse + snapshot RPCs |
-| **M4** | Inventory Ops | Frontend + Backend | NOT STARTED | Receive + Count workflows |
-| **M5** | Inventory Dashboard | Frontend | NOT STARTED | Backend RPC ready (get_inventory_snapshot) |
-| **M6** | Forecasting v1 | Data/Backend | NOT STARTED | Rolling avg by DOW planned |
-| **M7** | Admin (Menu + BOM) | Frontend | NOT STARTED | CRUD for menu, ingredients, BOM |
+| Module | Name | Owner | Backend | Frontend | Notes |
+|--------|------|-------|---------|----------|-------|
+| **M0** | Repo + Local Setup | DevOps/Lead | DONE | DONE | Supabase linked, CLI working, auth user created |
+| **M1** | Supabase Schema | Backend | DONE | n/a | 9 tables, 2 enums, RLS, indexes |
+| **M2** | Ingestion (CSV + Orders) | Frontend + Backend | DONE | PENDING | Item-level + order-level RPCs, onboarding flow |
+| **M3** | Consumption Engine | Backend | DONE | n/a | daily close, reverse, bulk close, smart snapshot |
+| **M4** | Inventory Ops | Frontend + Backend | DONE | PENDING | receive_inventory + count_inventory RPCs |
+| **M5** | Inventory Dashboard | Frontend | DONE | PENDING | get_inventory_snapshot with auto-window detection |
+| **M6** | Forecasting v1 | Data/Backend | DONE | PENDING | generate_forecast + get_forecast, DOW rolling avg |
+| **M7** | Admin (Menu + BOM) | Frontend + Backend | DONE | PENDING | CRUD RPCs with validation, get_bom_for_item |
+| **M8** | Order Analytics | Backend | DONE | PENDING | daily_orders table, get_daily_analytics, get_revenue_trend |
 
 ### Current Focus
 
 ```
-DONE        DONE       DOING        DONE        TODO        TODO        TODO        TODO
- M0 -------> M1 -------> M2 -------> M3 -------> M5 -------> M4 -------> M6 -------> M7
-Setup       Schema     Ingestion   Consumption  Dashboard   Inv Ops    Forecast    Admin
-                       ^frontend    ^backend
+ALL BACKEND COMPLETE — FRONTEND IS THE BOTTLENECK
+
+ M0 -------> M1 -------> M2 -------> M3 -------> M4 -------> M5 -------> M6 -------> M7 -------> M8
+Setup       Schema     Ingestion   Consumption  Inv Ops    Dashboard   Forecast    Admin       Analytics
+ DONE        DONE       DONE        DONE        DONE        DONE        DONE       DONE         DONE
+                       ^frontend   ^frontend   ^frontend   ^frontend   ^frontend  ^frontend   ^frontend
 ```
 
 ---
@@ -292,27 +295,19 @@ Click "Run Daily Close" for a date with sales -> inventory decrements correctly.
 ## Module 4 — Inventory Ops (Receive + Count)
 
 **Owner**: Frontend + Backend
-**Status**: NOT STARTED
+**Status**: BACKEND DONE — frontend pending
+**Migration**: `20260207000400_inventory_ops.sql`
 
-### Requirements — Backend
-- [ ] `receive_inventory(p_ingredient_id, p_qty, p_note)` RPC
-  - Insert `RECEIVE` txn with positive qty_delta
-  - Increment `inventory_on_hand`
-- [ ] `count_inventory(p_ingredient_id, p_actual_qty)` RPC
-  - Compute delta = actual - current on_hand
-  - Insert `COUNT` txn with delta
-  - Set `inventory_on_hand` to actual
+### Requirements — Backend (DONE)
+- [x] `receive_inventory(p_ingredient_id, p_qty, p_note)` RPC — validates qty > 0, creates RECEIVE txn, auto-creates IOH row
+- [x] `count_inventory(p_ingredient_id, p_actual_qty)` RPC — validates qty >= 0, computes delta, creates COUNT txn
+- [x] 12 integration tests passing
 
-### Requirements — Frontend
+### Requirements — Frontend (PENDING)
 - [ ] **Receive Inventory page**: select ingredient, enter qty, optional note, submit
 - [ ] **Count Inventory page**: select ingredient, enter actual count, submit
 - [ ] Confirmation feedback after each operation
 - [ ] Show updated on-hand after submit
-
-### Features
-- Receive: adds stock when a delivery arrives
-- Count: corrects stock after a physical count (NCR-style)
-- Both create audit trail via `inventory_txns`
 
 ### Done When
 Manager can receive a delivery and correct inventory; snapshot reflects changes.
@@ -322,23 +317,20 @@ Manager can receive a delivery and correct inventory; snapshot reflects changes.
 ## Module 5 — Inventory Snapshot Dashboard
 
 **Owner**: Frontend
-**Status**: NOT STARTED (backend RPC ready)
+**Status**: BACKEND DONE — frontend pending
+**Migration**: `20260207000600_smart_snapshot_window.sql`
 
-### Requirements
+### Requirements — Backend (DONE)
+- [x] `get_inventory_snapshot()` RPC — auto-detects data window (works with historical + real-time data)
+- [x] Returns: ingredient info, qty_on_hand, avg_daily_usage, days_of_supply, days_to_reorder, status
+- [x] Sorted by urgency (critical first)
+- [x] All 32 ingredients returning real data
+
+### Requirements — Frontend (PENDING)
 - [ ] Call `get_inventory_snapshot()` RPC on page load
-- [ ] Render table with columns:
-  - Ingredient name
-  - Unit
-  - On hand (qty)
-  - Reorder point
-  - Avg daily usage (last 14 days)
-  - Days of supply
-  - Days to reorder
-  - Status badge (OK / Reorder Soon / Critical)
+- [ ] Render table with all fields
 - [ ] Color-coded status badges: green (ok), yellow (reorder_soon), red (critical)
-- [ ] Sort by urgency (critical items at top — already sorted by RPC)
 - [ ] Auto-refresh or manual refresh button
-- [ ] Responsive layout
 
 ### Done When
 Dashboard renders current inventory and flags low items automatically.
@@ -348,37 +340,21 @@ Dashboard renders current inventory and flags low items automatically.
 ## Module 6 — Forecasting v1
 
 **Owner**: Data/Backend
-**Status**: NOT STARTED
+**Status**: BACKEND DONE — frontend pending
+**Migration**: `20260207000500_forecasting_v1.sql`
 
-### Requirements — Backend
-- [ ] `forecast_items` table: (id, forecast_date, menu_item_id, qty)
-- [ ] `forecast_ingredients` table: (id, forecast_date, ingredient_id, qty)
-- [ ] `generate_forecast(p_days_ahead integer default 7)` RPC or Edge Function
-  - Daily item demand = rolling average by day-of-week (last 4-6 weeks)
-  - Convert to ingredient forecast via BOM
-  - Store results in forecast tables
-- [ ] `get_forecast(p_days_ahead integer default 7)` RPC
-  - Returns next N days of ingredient needs
+### Requirements — Backend (DONE)
+- [x] `forecast_items` table (id, forecast_date, menu_item_id, qty)
+- [x] `forecast_ingredients` table (id, forecast_date, ingredient_id, qty)
+- [x] `generate_forecast(p_days_ahead, p_reference_date)` RPC — rolling DOW avg from last 6 weeks, converts to ingredients via BOM, idempotent
+- [x] `get_forecast(p_reference_date)` RPC — returns 7-day ingredient forecast with on_hand and shortfall
+- [x] 620 item forecasts + 224 ingredient forecasts generated from real data
+- [x] 8 integration tests passing
 
-### Requirements — Frontend
+### Requirements — Frontend (PENDING)
 - [ ] Forecast page showing next 7 days of ingredient needs
 - [ ] Table: date, ingredient, forecasted qty, current on_hand, shortfall
-- [ ] Visual indicator for shortfalls
-
-### Algorithm (v1 — simple)
-```
-For each menu_item:
-  For each day_of_week (Mon-Sun):
-    avg_qty = AVG(qty) from sales_line_items
-              WHERE EXTRACT(DOW FROM business_date) = target_dow
-              AND business_date >= current_date - 42  (6 weeks)
-
-For next 7 days:
-  For each menu_item:
-    forecast_qty = avg_qty for that DOW
-  For each ingredient:
-    forecast_ingredient_qty = SUM(forecast_qty * bom.qty_per_item)
-```
+- [ ] Color-code shortfall: red if positive (need to order), green if sufficient
 
 ### Done When
 Can show "next 7 days ingredient needs" based on historical sales patterns.
@@ -387,14 +363,23 @@ Can show "next 7 days ingredient needs" based on historical sales patterns.
 
 ## Module 7 — Admin (Menu + BOM Editor)
 
-**Owner**: Frontend
-**Status**: NOT STARTED
+**Owner**: Frontend + Backend
+**Status**: BACKEND DONE — frontend pending
+**Migration**: `20260207000800_admin_crud_rpcs.sql`
 
-### Requirements
-- [ ] **Menu Items page**: list, add, edit, deactivate menu items
-- [ ] **Ingredients page**: list, add, edit ingredients (name, unit, reorder_point, lead_time, cost)
-- [ ] **BOM Builder page**: select menu item, add/edit/remove ingredient rows with qty_per_item
-- [ ] Validation: prevent duplicate BOM entries, require positive quantities
+### Requirements — Backend (DONE)
+- [x] `upsert_menu_item(p_id, p_name, p_category, p_active)` — create/update with duplicate name check
+- [x] `deactivate_menu_item(p_id)` — soft delete
+- [x] `upsert_ingredient(p_id, p_name, p_unit, p_reorder_point, p_lead_time_days, p_unit_cost)` — full validation
+- [x] `upsert_bom_entry(p_menu_item_id, p_ingredient_id, p_qty_per_item)` — validates FKs + qty > 0
+- [x] `delete_bom_entry(p_menu_item_id, p_ingredient_id)`
+- [x] `get_bom_for_item(p_menu_item_id)` — returns ingredients with costs and total recipe cost
+- [x] 20 integration tests passing
+
+### Requirements — Frontend (PENDING)
+- [ ] **Menu Items page**: list, add, edit, deactivate
+- [ ] **Ingredients page**: list, add, edit
+- [ ] **BOM Builder page**: select menu item, add/edit/remove ingredient rows
 - [ ] Confirmation dialogs for destructive actions
 
 ### Done When
@@ -402,13 +387,40 @@ Non-technical person can set up a new restaurant's menu, ingredients, and recipe
 
 ---
 
+## Module 8 — Order Analytics (NEW)
+
+**Owner**: Backend
+**Status**: BACKEND DONE — frontend pending
+**Migration**: `20260207000700_daily_orders_and_analytics.sql`
+
+### What It Does
+Stores order-level data from Toast OrderDetails CSV (different from item-level sales).
+Provides revenue analytics, service mix, guest counts, peak hours, server performance.
+
+### Requirements — Backend (DONE)
+- [x] `daily_orders` table with full Toast OrderDetails schema
+- [x] `ingest_daily_orders(p_rows)` — batch upserts order data, safe to re-upload
+- [x] `get_daily_analytics(p_business_date)` — revenue summary, service period/dining option/hour/server breakdowns
+- [x] `get_revenue_trend(p_days)` — daily revenue trend for last N days
+- [x] 10 integration tests passing
+- [x] 73 orders loaded from test data (Dec 31, 2015)
+
+### Requirements — Frontend (PENDING)
+- [ ] Revenue dashboard cards: total revenue, orders, avg order value, guests
+- [ ] Charts: revenue by hour, by service period, by dining option
+- [ ] Server leaderboard
+
+### Done When
+Manager can see daily revenue breakdown and trends.
+
+---
+
 ## Team Roles
 
-| Role | Modules | Current Focus |
-|------|---------|---------------|
-| **Backend (you)** | M0, M1, M2 (RPC), M3, M4 (RPC), M6 | M4 backend RPCs next |
-| **Frontend Dev** | M0 (UI), M2 (UI), M4 (UI), M5, M7 | M0 setup + M2 CSV upload |
-| **Data/Forecast** | M6 | Blocked until M2+M3 have real data flowing |
+| Role | Modules | Status |
+|------|---------|--------|
+| **Backend** | M0-M8 (all RPCs) | ALL DONE — 66 tests passing |
+| **Frontend Dev** | M2 UI, M4 UI, M5, M6 UI, M7 UI, M8 UI | ALL PENDING — this is the bottleneck |
 | **DevOps/Lead** | M0, code review, merge | Ongoing |
 
 ---
@@ -417,15 +429,18 @@ Non-technical person can set up a new restaurant's menu, ingredients, and recipe
 
 ### Tables
 
-| Table | PK | Key Columns | Notes |
-|-------|-----|-------------|-------|
-| `menu_items` | `id` (uuid) | name, category, active | Auto-created by ingest RPC |
-| `ingredients` | `id` (uuid) | name, unit, reorder_point, lead_time_days, unit_cost | |
-| `bom` | `(menu_item_id, ingredient_id)` | qty_per_item | Recipe/bill of materials |
-| **`sales_line_items`** | **`id` (uuid)** | **business_date, menu_item_id, qty, net_sales** | **SINGLE SOURCE OF TRUTH** |
-| `inventory_on_hand` | `ingredient_id` | qty_on_hand, updated_at | Derived from txns |
-| `inventory_txns` | `id` (uuid) | ingredient_id, txn_type, qty_delta, business_date | Audit trail |
-| `app_config` | `key` (text) | value (jsonb), updated_at | Onboarding state |
+| Table | PK | Key Columns | Rows | Notes |
+|-------|-----|-------------|------|-------|
+| `menu_items` | `id` (uuid) | name, category, active | 91 | Auto-created by ingest RPC |
+| `ingredients` | `id` (uuid) | name, unit, reorder_point, lead_time_days, unit_cost | 32 | |
+| `bom` | `(menu_item_id, ingredient_id)` | qty_per_item | 674 | Size-scaled recipes |
+| **`sales_line_items`** | **`id` (uuid)** | **business_date, menu_item_id, qty, net_sales** | **22,964** | **SINGLE SOURCE OF TRUTH** |
+| `inventory_on_hand` | `ingredient_id` | qty_on_hand, updated_at | 32 | |
+| `inventory_txns` | `id` (uuid) | ingredient_id, txn_type, qty_delta, business_date | 11,280 | Audit trail |
+| `app_config` | `key` (text) | value (jsonb), updated_at | 1 | Onboarding state |
+| `forecast_items` | `id` (uuid) | forecast_date, menu_item_id, qty | 620 | Item-level forecasts |
+| `forecast_ingredients` | `id` (uuid) | forecast_date, ingredient_id, qty | 224 | Ingredient-level forecasts |
+| `daily_orders` | `id` (uuid) | business_date, order_id, subtotal, tip, total, ... | 73 | Order-level analytics |
 
 ### Enums
 
@@ -446,11 +461,20 @@ Non-technical person can set up a new restaurant's menu, ingredients, and recipe
 | `run_daily_close(p_business_date)` | date | `{ status, consume_txns_created, ingredients_updated }` | M3 | LIVE |
 | `run_bulk_close()` | (none) | `{ status, dates_processed, total_consume_txns }` | M3 | LIVE |
 | `reverse_daily_close(p_business_date)` | date | `{ status, txns_reversed }` | M3 | LIVE |
-| `get_inventory_snapshot()` | (none) | jsonb array of ingredient snapshots | M5 | LIVE |
-| `receive_inventory(...)` | ingredient_id, qty, note | TBD | M4 | NOT BUILT |
-| `count_inventory(...)` | ingredient_id, actual_qty | TBD | M4 | NOT BUILT |
-| `generate_forecast(...)` | days_ahead | TBD | M6 | NOT BUILT |
-| `get_forecast(...)` | days_ahead | TBD | M6 | NOT BUILT |
+| `get_inventory_snapshot()` | (none) | jsonb array of ingredient snapshots (auto-window) | M5 | LIVE |
+| `receive_inventory(p_ingredient_id, p_qty, p_note)` | uuid, numeric, text | `{ status, qty_received, new_qty_on_hand }` | M4 | LIVE |
+| `count_inventory(p_ingredient_id, p_actual_qty)` | uuid, numeric | `{ status, previous_qty, delta, new_qty_on_hand }` | M4 | LIVE |
+| `generate_forecast(p_days_ahead, p_reference_date)` | int, date | `{ status, item_forecasts, ingredient_forecasts }` | M6 | LIVE |
+| `get_forecast(p_reference_date)` | date | jsonb array of ingredient forecasts with shortfall | M6 | LIVE |
+| `upsert_menu_item(p_id, p_name, p_category, p_active)` | uuid, text, text, bool | `{ status, action, id, name }` | M7 | LIVE |
+| `deactivate_menu_item(p_id)` | uuid | `{ status, id, name, active }` | M7 | LIVE |
+| `upsert_ingredient(p_id, p_name, p_unit, ...)` | uuid, text, unit_type, ... | `{ status, action, id, name }` | M7 | LIVE |
+| `upsert_bom_entry(p_menu_item_id, p_ingredient_id, p_qty)` | uuid, uuid, numeric | `{ status, menu_item, ingredient, qty }` | M7 | LIVE |
+| `delete_bom_entry(p_menu_item_id, p_ingredient_id)` | uuid, uuid | `{ status, deleted }` | M7 | LIVE |
+| `get_bom_for_item(p_menu_item_id)` | uuid | `{ status, ingredients[], total_cost }` | M7 | LIVE |
+| `ingest_daily_orders(p_rows)` | jsonb array of order rows | `{ status, rows_processed }` | M8 | LIVE |
+| `get_daily_analytics(p_business_date)` | date (optional) | `{ status, revenue, orders, by_server, ... }` | M8 | LIVE |
+| `get_revenue_trend(p_days)` | int | jsonb array of daily revenue data | M8 | LIVE |
 
 ---
 
@@ -470,3 +494,26 @@ Non-technical person can set up a new restaurant's menu, ingredients, and recipe
 | `20260207000100` | `init_schema.sql` | Tables, enums, indexes, RLS policies |
 | `20260207000200` | `consumption_engine.sql` | business_date column, ingest/close/reverse/snapshot RPCs |
 | `20260207000300` | `onboarding_and_bulk_close.sql` | app_config table, onboarding RPCs, bulk close |
+| `20260207000400` | `inventory_ops.sql` | receive_inventory, count_inventory RPCs |
+| `20260207000500` | `forecasting_v1.sql` | forecast tables, generate_forecast, get_forecast RPCs |
+| `20260207000600` | `smart_snapshot_window.sql` | Auto-detect data window for snapshot |
+| `20260207000700` | `daily_orders_and_analytics.sql` | daily_orders table, analytics RPCs |
+| `20260207000710` | `fix_analytics_no_data.sql` | Fix no_data handling in get_daily_analytics |
+| `20260207000800` | `admin_crud_rpcs.sql` | Module 7 admin CRUD RPCs with validation |
+
+## Auth
+
+| User | Email | Password | Notes |
+|------|-------|----------|-------|
+| Demo | `demo@tonys.pizza` | `TonysPizza2026!` | Pre-confirmed, ready for frontend |
+
+## Test Suite
+
+| File | Tests | Module |
+|------|-------|--------|
+| `tests/rpc.test.js` | 16 | M2, M3, M5 (core RPCs) |
+| `tests/m4-inventory-ops.test.js` | 12 | M4 (receive, count) |
+| `tests/m6-forecast.test.js` | 8 | M6 (generate, get forecast) |
+| `tests/m7-admin-crud.test.js` | 20 | M7 (CRUD RPCs) |
+| `tests/orders-analytics.test.js` | 10 | M8 (orders, analytics) |
+| **Total** | **66** | **All passing** |
