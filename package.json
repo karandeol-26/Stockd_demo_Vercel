@@ -21,6 +21,7 @@
   "homepage": "https://github.com/panjabandharyana/ugahacks11#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^17.2.4",
     "papaparse": "^5.5.3"
   },
   "devDependencies": {
