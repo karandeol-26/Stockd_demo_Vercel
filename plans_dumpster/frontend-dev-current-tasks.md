@@ -383,6 +383,218 @@ const { data: menuItems } = await supabase
 
 ---
 
+## NEW: Order Analytics RPCs (Module 8)
+
+Handles Toast OrderDetails CSV (order-level, not item-level). Gives revenue analytics, service mix, peak hours, server performance.
+
+### `ingest_daily_orders(p_rows)`
+
+Batch upserts order-level data from Toast OrderDetails CSV. Safe to re-upload (upserts by order_id).
+
+```js
+const { data, error } = await supabase.rpc('ingest_daily_orders', {
+  p_rows: [
+    {
+      business_date: '2015-12-31',
+      order_id: '21278',
+      opened_at: '2015-12-31T11:22:31',
+      closed_at: '2015-12-31T11:32:31',
+      num_guests: 3,
+      server_name: 'Sofia',
+      dining_area: 'Patio',
+      service_period: 'Lunch',
+      dining_option: 'Dine In',
+      order_source: 'In store',
+      discount_amount: 4.42,
+      subtotal: 39.83,
+      tax: 3.19,
+      tip: 4.78,
+      gratuity: 0,
+      total: 47.80,
+      voided: false
+    }
+  ]
+});
+// Returns: { status: 'success', rows_processed: 73 }
+```
+
+### Toast OrderDetails CSV Column Mapping
+
+| Toast Column | Maps To | Notes |
+|---|---|---|
+| `Opened` | `business_date` + `opened_at` | Extract date for business_date, full timestamp for opened_at |
+| `Closed` | `closed_at` | Full timestamp |
+| `Order Id` | `order_id` | Unique per order |
+| `# of Guests` | `num_guests` | |
+| `Server` | `server_name` | |
+| `Dining Area` | `dining_area` | Patio, Front, Bar, etc. |
+| `Service` | `service_period` | Lunch, Dinner, Late Night |
+| `Dining Options` | `dining_option` | Dine In, Takeout, Delivery |
+| `Order Source` | `order_source` | In store, Online |
+| `Discount Amount` | `discount_amount` | |
+| `Amount` | `subtotal` | Pre-tax amount |
+| `Tax` | `tax` | |
+| `Tip` | `tip` | |
+| `Gratuity` | `gratuity` | |
+| `Total` | `total` | |
+| `Voided` | `voided` | Skip if True |
+
+### `get_daily_analytics(p_business_date)`
+
+Returns full revenue breakdown for a date. If no date passed, uses most recent date with data.
+
+```js
+const { data } = await supabase.rpc('get_daily_analytics', {
+  p_business_date: '2015-12-31'  // optional — auto-detects if omitted
+});
+// Returns:
+// {
+//   status: 'success',
+//   business_date: '2015-12-31',
+//   total_orders: 73,
+//   total_revenue: 2872.75,
+//   avg_order_value: 39.35,
+//   total_guests: 124,
+//   total_tips: 324.13,
+//   total_discounts: 45.78,
+//   grand_total: 3536.94,
+//   by_service_period: [
+//     { period: 'Dinner', orders: 48, revenue: 1849.10 },
+//     { period: 'Lunch', orders: 23, revenue: 990.65 }
+//   ],
+//   by_dining_option: [
+//     { option: 'Takeout', orders: 31, revenue: 1128.82 },
+//     { option: 'Dine In', orders: 28, revenue: 1336.94 },
+//     { option: 'Delivery', orders: 14, revenue: 406.99 }
+//   ],
+//   by_hour: [ { hour: 11, orders: 3, revenue: 76.58 }, ... ],
+//   by_server: [
+//     { server: 'Leo', orders: 12, revenue: 607.30, tips: 82.05 }, ...
+//   ]
+// }
+```
+
+### `get_revenue_trend(p_days)`
+
+Returns daily revenue trend for the last N days of data. Auto-detects window.
+
+```js
+const { data } = await supabase.rpc('get_revenue_trend', { p_days: 30 });
+// Returns array:
+// [
+//   { business_date: '2015-12-31', orders: 73, revenue: 2872.75,
+//     avg_order_value: 39.35, guests: 124, tips: 324.13, discounts: 45.78 }
+// ]
+```
+
+---
+
+## NEW: Admin CRUD RPCs (Module 7)
+
+Backend RPCs with full validation for managing menu items, ingredients, and BOM recipes.
+
+### `upsert_menu_item(p_id, p_name, p_category, p_active)`
+
+Create or update a menu item. Checks for duplicate names.
+
+```js
+// Create new
+const { data } = await supabase.rpc('upsert_menu_item', {
+  p_name: 'New Special Pizza', p_category: 'Special', p_active: true
+});
+// Returns: { status: 'success', action: 'created', id: 'uuid', name: '...' }
+
+// Update existing
+const { data } = await supabase.rpc('upsert_menu_item', {
+  p_id: 'existing-uuid', p_name: 'Renamed Pizza', p_category: 'Classic'
+});
+// Returns: { status: 'success', action: 'updated', id: 'uuid', name: '...' }
+// Errors: { status: 'error', message: 'name is required' | 'already exists' | 'not found' }
+```
+
+### `deactivate_menu_item(p_id)`
+
+Soft-deletes a menu item (sets `active = false`).
+
+```js
+const { data } = await supabase.rpc('deactivate_menu_item', { p_id: 'uuid' });
+// Returns: { status: 'success', id: '...', name: '...', active: false }
+```
+
+### `upsert_ingredient(p_id, p_name, p_unit, p_reorder_point, p_lead_time_days, p_unit_cost)`
+
+Create or update an ingredient. Validates all numeric fields >= 0.
+
+```js
+const { data } = await supabase.rpc('upsert_ingredient', {
+  p_name: 'Goat Cheese', p_unit: 'oz',
+  p_reorder_point: 20, p_lead_time_days: 2, p_unit_cost: 0.55
+});
+// Returns: { status: 'success', action: 'created', id: 'uuid', name: '...' }
+```
+
+### `upsert_bom_entry(p_menu_item_id, p_ingredient_id, p_qty_per_item)`
+
+Add or update a recipe ingredient link. Validates both FKs exist and qty > 0.
+
+```js
+const { data } = await supabase.rpc('upsert_bom_entry', {
+  p_menu_item_id: 'pizza-uuid',
+  p_ingredient_id: 'cheese-uuid',
+  p_qty_per_item: 4.5
+});
+// Returns: { status: 'success', menu_item: '...', ingredient: '...', qty_per_item: 4.5 }
+```
+
+### `delete_bom_entry(p_menu_item_id, p_ingredient_id)`
+
+Remove an ingredient from a recipe.
+
+```js
+const { data } = await supabase.rpc('delete_bom_entry', {
+  p_menu_item_id: 'pizza-uuid', p_ingredient_id: 'cheese-uuid'
+});
+// Returns: { status: 'success', deleted: true }
+```
+
+### `get_bom_for_item(p_menu_item_id)`
+
+Returns all ingredients for a menu item, including costs.
+
+```js
+const { data } = await supabase.rpc('get_bom_for_item', {
+  p_menu_item_id: 'pizza-uuid'
+});
+// Returns:
+// {
+//   status: 'success',
+//   menu_item_id: '...',
+//   menu_item_name: 'The Pepperoni Pizza (S)',
+//   total_cost: 2.49,
+//   ingredients: [
+//     { ingredient_id: '...', ingredient_name: 'Pepperoni', unit: 'oz',
+//       qty_per_item: 3, unit_cost: 0.35, cost_per_item: 1.05 },
+//     ...
+//   ]
+// }
+```
+
+---
+
+## Auth — Login
+
+A demo user has been created. Use this to sign in:
+
+```js
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: 'demo@tonys.pizza',
+  password: 'TonysPizza2026!'
+});
+// After this, all RPC calls will work (authenticated session)
+```
+
+---
+
 ## Supabase Client Setup
 
 ```js
@@ -400,12 +612,14 @@ const supabase = createClient(
 
 ## Priority Order
 
-1. **Landing page / onboarding flow** (first-time setup experience)
-2. **Dashboard** (call `get_inventory_snapshot()` — all data is live)
-3. **Daily upload page** (post-setup incremental uploads)
-4. **Inventory ops pages**: Receive + Count
-5. **Forecast page** (call `generate_forecast()` then `get_forecast()`)
-6. Admin pages: Menu + Ingredients + BOM editor (lower priority)
+1. **Login page** (use demo credentials above)
+2. **Landing page / onboarding flow** (first-time setup experience)
+3. **Dashboard** (call `get_inventory_snapshot()` — all data is live)
+4. **Daily upload page** (post-setup incremental uploads — both CSV formats)
+5. **Inventory ops pages**: Receive + Count
+6. **Forecast page** (call `generate_forecast()` then `get_forecast()`)
+7. **Order analytics page** (call `get_daily_analytics()` — revenue breakdowns)
+8. Admin pages: Menu + Ingredients + BOM editor (all CRUD RPCs ready)
 
 ---
 
@@ -418,3 +632,5 @@ const supabase = createClient(
 - `sales_line_items` is the single source of truth — everything else derives from it
 - All credentials go in `.env` (gitignored) — see `.envexample` for template
 - The snapshot RPC auto-detects the data window, so it works with both our historical 2015 data and future real-time data
+- **Two CSV formats**: `ItemSelectionDetails` (item-level, feeds consumption engine) and `OrderDetails` (order-level, feeds analytics)
+- Demo auth: `demo@tonys.pizza` / `TonysPizza2026!`
