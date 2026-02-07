@@ -2,10 +2,13 @@
 
 ## Project Status
 
-- Module 0 (Repo + Setup): DONE (backend/DB side), DONE (frontend side — login page working)
+- Module 0 (Repo + Setup): DONE (backend + frontend)
 - Module 1 (Supabase Schema): DONE — 7 tables + 2 enums live in cloud
 - Module 2 (Ingestion): Backend RPCs DONE — onboarding + daily ingest + bulk close all live
 - Module 3 (Consumption Engine): DONE — daily close, reverse, snapshot RPCs all live
+- Module 4 (Inventory Ops): Backend RPCs DONE — receive_inventory + count_inventory live
+- Backend test suite: 28/28 tests passing, all RPCs verified bug-free
+- Production data: 22,964 sales rows, 91 menu items, 358 days (Jan-Dec 2015) loaded
 
 ## What You Can Work On Now
 
@@ -70,6 +73,26 @@ if (!data.setup_complete) {
 - Sort by urgency (critical items at top — already sorted by RPC)
 - Auto-refresh or manual refresh button
 - **Done when:** dashboard renders current inventory and flags low items automatically
+
+### 5. Inventory Ops Pages (Module 4)
+
+Backend RPCs are live. Build two pages:
+
+**Receive Inventory page:**
+- Dropdown to select ingredient (fetch from `ingredients` table)
+- Input: quantity received
+- Input: optional note (e.g. "Sysco delivery")
+- Submit calls `receive_inventory` RPC
+- Show confirmation with updated qty on hand
+
+**Count Inventory page:**
+- Dropdown to select ingredient
+- Shows current on-hand qty (fetch from `inventory_on_hand`)
+- Input: actual counted qty
+- Submit calls `count_inventory` RPC
+- Show confirmation with delta and new qty
+
+**Done when:** manager can receive a delivery and correct inventory via physical count.
 
 ---
 
@@ -157,6 +180,34 @@ const { data, error } = await supabase.rpc('get_inventory_snapshot');
 //   avg_daily_usage, days_of_supply, days_to_reorder, status, ... }]
 ```
 
+### `receive_inventory(p_ingredient_id, p_qty, p_note)`
+
+Receives a delivery. Adds qty to inventory, creates a RECEIVE audit txn. Validates qty > 0. Auto-creates inventory row if none exists.
+
+```js
+const { data, error } = await supabase.rpc('receive_inventory', {
+  p_ingredient_id: '...',
+  p_qty: 25,
+  p_note: 'Weekly delivery from Sysco'  // optional, can be null
+});
+// Returns: { status: 'success', ingredient_id, qty_received: 25, new_qty_on_hand: 75 }
+// Error:   { status: 'error', message: 'qty must be greater than 0' }
+```
+
+### `count_inventory(p_ingredient_id, p_actual_qty)`
+
+Physical count correction. Sets inventory to actual counted qty, computes and records the delta. Validates actual_qty >= 0.
+
+```js
+const { data, error } = await supabase.rpc('count_inventory', {
+  p_ingredient_id: '...',
+  p_actual_qty: 85
+});
+// Returns: { status: 'success', ingredient_id, previous_qty: 100,
+//            actual_qty: 85, delta: -15, new_qty_on_hand: 85 }
+// Error:   { status: 'error', message: 'actual_qty must be >= 0' }
+```
+
 ---
 
 ## Toast CSV Column Mapping
@@ -206,7 +257,8 @@ When parsing `Toast_ItemSelectionDetails.csv`, map these columns:
 1. ~~Frontend setup + login page~~ DONE
 2. **Landing page / onboarding flow** (first-time setup experience) -- DO THIS NEXT
 3. Daily upload page (post-setup incremental uploads)
-4. Dashboard (backend RPCs are ready — just call `get_inventory_snapshot()`)
+4. Dashboard (backend RPC ready — just call `get_inventory_snapshot()`)
+5. Inventory ops pages: Receive + Count (backend RPCs ready)
 
 ## Notes
 
