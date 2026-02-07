@@ -114,6 +114,20 @@ Backend RPCs are live and tested.
 
 **Done when:** manager can receive a delivery and correct inventory via physical count.
 
+### 4b. US Foods Invoice Matching (New helper available)
+
+- Backend helper: `getInvoiceMatches(pdfBuffer, supabase)` in `scripts/usfoodsInvoiceMatch.mjs`
+- What it does: parses a US Foods PDF, fuzzy-matches invoice lines to `ingredients`, and returns `{ matches, unmatched }` without mutating the DB.
+- Match shape:
+  - `matches`: [{ ingredientId, ingredientName, ingredientUnit, qtyOrdered, qtyShipped, salesUnit, productNumber, rawLine }]
+  - `unmatched`: invoice lines not matched to any ingredient
+- How to use (frontend flow):
+  1) Upload PDF (File input → `ArrayBuffer`/`Uint8Array`)
+  2) Call a tiny API that wraps `getInvoiceMatches(pdfBuffer, supabase)`
+  3) Show a confirmation table (ingredient name, qtyShipped/qtyOrdered, unit, product number)
+  4) On confirm, call `receive_inventory` per matched line using `ingredientId` and `qtyShipped` (or `qtyOrdered` fallback)
+- Existing end-to-end script example: `node scripts/receive-usfoods-invoice.mjs` (does parse + match + receive). Use that as a reference but keep the UI flow “confirm before receive”.
+
 ---
 
 ### 5. Forecast Page (Module 6) — NEW

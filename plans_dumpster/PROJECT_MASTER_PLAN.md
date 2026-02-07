@@ -310,6 +310,18 @@ Click "Run Daily Close" for a date with sales -> inventory decrements correctly.
 - [ ] Confirmation feedback after each operation
 - [ ] Show updated on-hand after submit
 
+### NEW: US Foods Invoice Matching (read-only confirm flow)
+- Helper module: `scripts/usfoodsInvoiceMatch.mjs`
+- Export: `getInvoiceMatches(pdfBuffer, supabase)` → `{ matches, unmatched }`
+  - `matches`: [{ ingredientId, ingredientName, ingredientUnit, qtyOrdered, qtyShipped, salesUnit, productNumber, rawLine }]
+  - `unmatched`: invoice lines not matched to any ingredient
+- Frontend flow to implement:
+  1) User uploads US Foods PDF
+  2) Frontend sends PDF (ArrayBuffer) to a tiny API route that calls `getInvoiceMatches`
+  3) Show confirmation table in UI (name, qtyShipped/qtyOrdered, unit, product number)
+  4) On confirm, call `receive_inventory` per matched line using `ingredientId` and `qtyShipped` (fallback to `qtyOrdered`)
+- Reference script (end-to-end parse+receive): `scripts/receive-usfoods-invoice.mjs` — keep UI confirm step before writing.
+
 ### Done When
 Manager can receive a delivery and correct inventory; snapshot reflects changes.
 
