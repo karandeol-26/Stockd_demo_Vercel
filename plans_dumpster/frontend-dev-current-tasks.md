@@ -9,7 +9,7 @@
 ## What You Can Work On Now
 
 ### 1. Frontend Project Setup (Module 0 — Frontend Side)
-
+### DONE WITH THIS
 - Set up a simple static frontend (Vite or plain live-server)
 - Create the base folder structure:
   - `frontend/index.html`
