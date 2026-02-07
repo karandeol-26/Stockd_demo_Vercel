@@ -5,7 +5,7 @@
 
 // ─── PASTE YOUR KEYS HERE ────────────────────
 const SUPABASE_URL  = 'https://ifycpxtpyysuthnknptl.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmeWNweHRweXlzdXRobmtucHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NzAwMDksImV4cCI6MjA4NjA0NjAwOX0.RO2F6bLvbo34ZGRDpjbv8NrsHtmkX_D9mtXTVb0ErhY';  // ← paste your anon key from .env
+const SUPABASE_ANON = "";
 // ──────────────────────────────────────────────
 
 if (!SUPABASE_ANON) {
