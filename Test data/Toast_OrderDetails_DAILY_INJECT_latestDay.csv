@@ -1,0 +1,74 @@
+Location,Order Id,Order #,Checks,Opened,# of Guests,Tab Names,Server,Table,Revenue Center,Dining Area,Service,Dining Options,Discount Amount,Amount,Tax,Tip,Gratuity,Total,Voided,Paid,Closed,Duration (Opened to Paid),Order Source
+Tony's Pizza - Atlanta,21278,21278,['21278'],12/31/2015 11:22:31,3,Table 14,Sofia,14.0,Main,Patio,Lunch,Dine In,4.42,39.83,3.1864,4.78,0.0,47.8,False,12/31/2015 11:32:31,12/31/2015 11:32:31,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21279,21279,['21279'],12/31/2015 11:38:45,3,,Jay,,Main,,Lunch,Takeout,0.0,16.75,1.34,0.0,0.0,18.09,False,12/31/2015 11:46:45,12/31/2015 11:46:45,0 days 00:08:00,In store
+Tony's Pizza - Atlanta,21280,21280,['21280'],12/31/2015 11:58:28,3,,Leo,,Main,,Lunch,Takeout,0.0,16.75,1.34,0.84,0.0,18.93,False,12/31/2015 12:08:28,12/31/2015 12:10:28,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21281,21281,['21281'],12/31/2015 12:01:03,3,Table 13,Jay,13.0,Main,Bar,Lunch,Dine In,0.0,30.5,2.44,3.66,0.0,36.6,False,12/31/2015 12:10:03,12/31/2015 12:12:03,0 days 00:09:00,In store
+Tony's Pizza - Atlanta,21282,21282,['21282'],12/31/2015 12:09:59,2,Table 16,Ava,16.0,Main,Front,Lunch,Dine In,0.0,23.65,1.892,3.55,0.0,29.09,False,12/31/2015 12:18:59,12/31/2015 12:21:59,0 days 00:09:00,In store
+Tony's Pizza - Atlanta,21283,21283,['21283'],12/31/2015 12:14:54,1,,Sofia,,Main,,Lunch,Delivery,0.0,16.5,1.32,2.48,0.0,20.3,False,12/31/2015 12:17:54,12/31/2015 12:19:54,0 days 00:03:00,Online
+Tony's Pizza - Atlanta,21284,21284,['21284'],12/31/2015 12:34:06,2,Table 10,Zoe,10.0,Main,Patio,Lunch,Dine In,0.0,37.0,2.96,5.55,0.0,45.51,False,12/31/2015 12:41:06,12/31/2015 12:43:06,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21285,21285,['21285'],12/31/2015 12:41:37,1,,Ava,,Main,,Lunch,Takeout,0.0,60.25,4.82,0.0,0.0,65.07,False,12/31/2015 12:56:37,12/31/2015 12:56:37,0 days 00:15:00,In store
+Tony's Pizza - Atlanta,21286,21286,['21286'],12/31/2015 12:44:37,2,Table 3,Zoe,3.0,Main,Front,Lunch,Dine In,3.45,31.05,2.484,5.59,0.0,39.12,False,12/31/2015 12:53:37,12/31/2015 12:55:37,0 days 00:09:00,In store
+Tony's Pizza - Atlanta,21287,21287,['21287'],12/31/2015 12:48:36,1,Table 26,Sofia,26.0,Main,Bar,Lunch,Dine In,0.0,12.0,0.96,2.16,0.0,15.12,False,12/31/2015 13:00:36,12/31/2015 13:02:36,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21288,21288,['21288'],12/31/2015 13:04:18,1,Table 6,Leo,6.0,Main,Bar,Lunch,Dine In,0.0,203.45,16.276,30.52,0.0,250.25,False,12/31/2015 13:20:18,12/31/2015 13:21:18,0 days 00:16:00,In store
+Tony's Pizza - Atlanta,21289,21289,['21289'],12/31/2015 13:07:42,2,,Liam,,Main,,Lunch,Delivery,1.2,10.8,0.864,2.16,0.0,13.82,False,12/31/2015 13:10:42,12/31/2015 13:12:42,0 days 00:03:00,Online
+Tony's Pizza - Atlanta,21290,21290,['21290'],12/31/2015 13:16:45,1,,Noah,,Main,,Lunch,Delivery,4.18,37.57,3.0056,5.64,0.0,46.22,False,12/31/2015 13:34:45,12/31/2015 13:37:45,0 days 00:18:00,Online
+Tony's Pizza - Atlanta,21291,21291,['21291'],12/31/2015 13:29:39,2,,Sofia,,Main,,Lunch,Delivery,0.0,12.0,0.96,2.16,0.0,15.12,False,12/31/2015 13:40:39,12/31/2015 13:42:39,0 days 00:11:00,Online
+Tony's Pizza - Atlanta,21292,21292,['21292'],12/31/2015 13:34:19,3,Table 7,Liam,7.0,Main,Front,Lunch,Dine In,0.0,29.95,2.396,4.49,0.0,36.84,False,12/31/2015 13:46:19,12/31/2015 13:49:19,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21293,21293,['21293'],12/31/2015 14:40:24,2,,Liam,,Main,,Lunch,Takeout,0.0,59.75,4.78,0.0,0.0,64.53,False,12/31/2015 14:45:24,12/31/2015 14:46:24,0 days 00:05:00,In store
+Tony's Pizza - Atlanta,21294,21294,['21294'],12/31/2015 14:43:46,1,,Leo,,Main,,Lunch,Takeout,0.0,20.5,1.64,0.0,0.0,22.14,False,12/31/2015 14:53:46,12/31/2015 14:56:46,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21295,21295,['21295'],12/31/2015 14:52:25,1,Table 6,Noah,6.0,Main,Bar,Lunch,Dine In,0.0,72.75,5.82,13.1,0.0,91.67,False,12/31/2015 14:56:25,12/31/2015 14:57:25,0 days 00:04:00,In store
+Tony's Pizza - Atlanta,21296,21296,['21296'],12/31/2015 15:13:40,2,,Leo,,Main,,Lunch,Takeout,0.0,32.25,2.58,0.0,0.0,34.83,False,12/31/2015 15:21:40,12/31/2015 15:21:40,0 days 00:08:00,In store
+Tony's Pizza - Atlanta,21297,21297,['21297'],12/31/2015 15:28:07,2,Table 4,Leo,4.0,Main,Patio,Lunch,Dine In,0.0,32.75,2.62,5.9,0.0,41.27,False,12/31/2015 15:37:07,12/31/2015 15:38:07,0 days 00:09:00,In store
+Tony's Pizza - Atlanta,21298,21298,['21298'],12/31/2015 15:35:37,1,Table 23,Jay,23.0,Main,,Lunch,Dine In,0.0,91.5,7.32,13.72,0.0,112.54,False,12/31/2015 15:42:37,12/31/2015 15:43:37,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21299,21299,['21299'],12/31/2015 15:52:16,2,Table 9,Leo,9.0,Main,Patio,Lunch,Dine In,3.65,32.85,2.628,4.93,0.0,40.41,False,12/31/2015 16:04:16,12/31/2015 16:05:16,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21300,21300,['21300'],12/31/2015 15:52:48,2,,Mia,,Main,,Lunch,Takeout,0.0,70.25,5.62,3.51,0.0,79.38,False,12/31/2015 15:57:48,12/31/2015 15:59:48,0 days 00:05:00,In store
+Tony's Pizza - Atlanta,21301,21301,['21301'],12/31/2015 16:01:07,1,,Noah,,Main,,Dinner,Takeout,0.0,52.25,4.18,2.61,0.0,59.04,False,12/31/2015 16:02:07,12/31/2015 16:06:07,0 days 00:01:00,In store
+Tony's Pizza - Atlanta,21302,21302,['21302'],12/31/2015 16:06:42,1,Table 14,Jay,14.0,Main,,Dinner,Dine In,0.0,57.75,4.62,8.66,0.0,71.03,False,12/31/2015 16:13:42,12/31/2015 16:15:42,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21303,21303,['21303'],12/31/2015 16:30:34,2,,Noah,,Main,,Dinner,Takeout,0.0,74.5,5.96,3.72,0.0,84.18,False,12/31/2015 16:43:34,12/31/2015 16:45:34,0 days 00:13:00,In store
+Tony's Pizza - Atlanta,21304,21304,['21304'],12/31/2015 16:30:41,2,,Liam,,Main,,Dinner,Delivery,0.0,32.75,2.62,4.91,0.0,40.28,False,12/31/2015 16:47:41,12/31/2015 16:49:41,0 days 00:17:00,Online
+Tony's Pizza - Atlanta,21305,21305,['21305'],12/31/2015 16:31:16,2,,Liam,,Main,,Dinner,Takeout,0.0,37.0,2.96,3.7,0.0,43.66,False,12/31/2015 16:44:16,12/31/2015 16:45:16,0 days 00:13:00,In store
+Tony's Pizza - Atlanta,21306,21306,['21306'],12/31/2015 16:31:27,3,,Mia,,Main,,Dinner,Takeout,0.0,10.5,0.84,0.0,0.0,11.34,False,12/31/2015 16:43:27,12/31/2015 16:43:27,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21307,21307,['21307'],12/31/2015 16:37:14,4,,Sofia,,Main,,Dinner,Delivery,0.0,28.5,2.28,4.27,0.0,35.05,False,12/31/2015 16:43:14,12/31/2015 16:44:14,0 days 00:06:00,Online
+Tony's Pizza - Atlanta,21308,21308,['21308'],12/31/2015 16:44:35,1,Table 28,Liam,28.0,Main,Front,Dinner,Dine In,0.0,77.4,6.192,13.93,0.0,97.52,False,12/31/2015 17:01:35,12/31/2015 17:03:35,0 days 00:17:00,In store
+Tony's Pizza - Atlanta,21309,21309,['21309'],12/31/2015 16:46:41,2,Table 5,Sofia,5.0,Main,,Dinner,Dine In,0.0,16.5,1.32,2.48,0.0,20.3,False,12/31/2015 16:56:41,12/31/2015 16:59:41,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21310,21310,['21310'],12/31/2015 17:16:32,2,Table 24,Zoe,24.0,Main,,Dinner,Dine In,0.0,24.0,1.92,3.6,0.0,29.52,False,12/31/2015 17:26:32,12/31/2015 17:27:32,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21311,21311,['21311'],12/31/2015 17:17:26,1,,Sofia,,Main,,Dinner,Delivery,0.0,16.0,1.28,2.4,0.0,19.68,False,12/31/2015 17:27:26,12/31/2015 17:29:26,0 days 00:10:00,Online
+Tony's Pizza - Atlanta,21312,21312,['21312'],12/31/2015 17:21:24,1,,Leo,,Main,,Dinner,Delivery,0.0,65.5,5.24,9.82,0.0,80.56,False,12/31/2015 17:24:24,12/31/2015 17:25:24,0 days 00:03:00,Online
+Tony's Pizza - Atlanta,21313,21313,['21313'],12/31/2015 17:22:08,1,,Mia,,Main,,Dinner,Takeout,0.0,36.75,2.94,0.0,0.0,39.69,False,12/31/2015 17:31:08,12/31/2015 17:32:08,0 days 00:09:00,In store
+Tony's Pizza - Atlanta,21314,21314,['21314'],12/31/2015 17:36:51,1,,Ava,,Main,,Dinner,Takeout,0.0,25.5,2.04,2.55,0.0,30.09,False,12/31/2015 17:38:51,12/31/2015 17:40:51,0 days 00:02:00,In store
+Tony's Pizza - Atlanta,21315,21315,['21315'],12/31/2015 17:47:46,1,Table 16,Sofia,16.0,Main,,Dinner,Dine In,0.0,32.75,2.62,4.91,0.0,40.28,False,12/31/2015 17:58:46,12/31/2015 18:00:46,0 days 00:11:00,In store
+Tony's Pizza - Atlanta,21316,21316,['21316'],12/31/2015 17:53:14,2,,Zoe,,Main,,Dinner,Takeout,0.0,49.5,3.96,0.0,0.0,53.46,False,12/31/2015 18:02:14,12/31/2015 18:05:14,0 days 00:09:00,In store
+Tony's Pizza - Atlanta,21317,21317,['21317'],12/31/2015 18:01:42,1,,Leo,,Main,,Dinner,Takeout,0.0,36.25,2.9,0.0,0.0,39.15,False,12/31/2015 18:06:42,12/31/2015 18:08:42,0 days 00:05:00,In store
+Tony's Pizza - Atlanta,21318,21318,['21318'],12/31/2015 18:07:03,3,Table 1,Sofia,1.0,Main,,Dinner,Dine In,0.0,41.0,3.28,7.38,0.0,51.66,False,12/31/2015 18:19:03,12/31/2015 18:19:03,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21319,21319,['21319'],12/31/2015 18:07:19,1,,Sofia,,Main,,Dinner,Takeout,2.85,25.65,2.052,0.0,0.0,27.7,False,12/31/2015 18:13:19,12/31/2015 18:13:19,0 days 00:06:00,In store
+Tony's Pizza - Atlanta,21320,21320,['21320'],12/31/2015 18:09:28,2,,Noah,,Main,,Dinner,Delivery,0.0,16.5,1.32,3.3,0.0,21.12,False,12/31/2015 18:15:28,12/31/2015 18:16:28,0 days 00:06:00,Online
+Tony's Pizza - Atlanta,21321,21321,['21321'],12/31/2015 18:18:30,2,,Noah,,Main,,Dinner,Takeout,0.0,20.75,1.66,1.04,0.0,23.45,False,12/31/2015 18:28:30,12/31/2015 18:28:30,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21322,21322,['21322'],12/31/2015 18:28:04,2,,Noah,,Main,,Dinner,Takeout,4.88,27.62,2.2096,2.76,0.0,32.59,False,12/31/2015 18:35:04,12/31/2015 18:35:04,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21323,21323,['21323'],12/31/2015 18:28:05,1,,Ava,,Main,,Dinner,Takeout,4.45,40.05,3.204,4.0,0.0,47.25,False,12/31/2015 18:36:05,12/31/2015 18:38:05,0 days 00:08:00,In store
+Tony's Pizza - Atlanta,21324,21324,['21324'],12/31/2015 18:36:06,2,,Liam,,Main,,Dinner,Takeout,0.0,12.75,1.02,1.28,0.0,15.05,False,12/31/2015 18:48:06,12/31/2015 18:48:06,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21325,21325,['21325'],12/31/2015 18:37:20,1,,Noah,,Main,,Dinner,Takeout,0.0,50.7,4.056,5.07,0.0,59.83,False,12/31/2015 18:42:20,12/31/2015 18:44:20,0 days 00:05:00,In store
+Tony's Pizza - Atlanta,21326,21326,['21326'],12/31/2015 18:38:38,1,Table 24,Noah,24.0,Main,Front,Dinner,Dine In,0.0,58.0,4.64,11.6,0.0,74.24,False,12/31/2015 18:42:38,12/31/2015 18:42:38,0 days 00:04:00,In store
+Tony's Pizza - Atlanta,21327,21327,['21327'],12/31/2015 18:40:22,1,,Ava,,Main,,Dinner,Takeout,0.0,20.75,1.66,0.0,0.0,22.41,False,12/31/2015 18:47:22,12/31/2015 18:48:22,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21328,21328,['21328'],12/31/2015 18:46:11,1,Table 14,Leo,14.0,Main,Bar,Dinner,Dine In,0.0,51.5,4.12,10.3,0.0,65.92,False,12/31/2015 18:53:11,12/31/2015 18:54:11,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21329,21329,['21329'],12/31/2015 18:52:10,1,,Mia,,Main,,Dinner,Takeout,0.0,36.75,2.94,0.0,0.0,39.69,False,12/31/2015 19:02:10,12/31/2015 19:04:10,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21330,21330,['21330'],12/31/2015 19:02:33,1,,Zoe,,Main,,Dinner,Delivery,0.0,38.7,3.096,6.97,0.0,48.77,False,12/31/2015 19:17:33,12/31/2015 19:17:33,0 days 00:15:00,Online
+Tony's Pizza - Atlanta,21331,21331,['21331'],12/31/2015 19:05:04,1,Table 24,Zoe,24.0,Main,Front,Dinner,Dine In,7.14,64.31,5.1448,11.58,0.0,81.03,False,12/31/2015 19:12:04,12/31/2015 19:15:04,0 days 00:07:00,In store
+Tony's Pizza - Atlanta,21332,21332,['21332'],12/31/2015 19:06:29,2,,Zoe,,Main,,Dinner,Takeout,4.95,44.55,3.564,0.0,0.0,48.11,False,12/31/2015 19:14:29,12/31/2015 19:15:29,0 days 00:08:00,In store
+Tony's Pizza - Atlanta,21333,21333,['21333'],12/31/2015 19:16:54,1,,Jay,,Main,,Dinner,Delivery,0.0,41.5,3.32,6.22,0.0,51.04,False,12/31/2015 19:21:54,12/31/2015 19:22:54,0 days 00:05:00,Online
+Tony's Pizza - Atlanta,21334,21334,['21334'],12/31/2015 19:17:49,3,Table 27,Noah,27.0,Main,,Dinner,Dine In,0.0,14.75,1.18,2.66,0.0,18.59,False,12/31/2015 19:21:49,12/31/2015 19:23:49,0 days 00:04:00,In store
+Tony's Pizza - Atlanta,21335,21335,['21335'],12/31/2015 19:18:44,1,,Ava,,Main,,Dinner,Takeout,0.0,24.5,1.96,0.0,0.0,26.46,False,12/31/2015 19:28:44,12/31/2015 19:29:44,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21336,21336,['21336'],12/31/2015 19:19:26,1,,Leo,,Main,,Dinner,Delivery,0.0,34.75,2.78,5.21,0.0,42.74,False,12/31/2015 19:27:26,12/31/2015 19:28:26,0 days 00:08:00,Online
+Tony's Pizza - Atlanta,21337,21337,['21337'],12/31/2015 19:22:31,1,,Ava,,Main,,Dinner,Delivery,0.0,37.25,2.98,7.45,0.0,47.68,False,12/31/2015 19:34:31,12/31/2015 19:35:31,0 days 00:12:00,Online
+Tony's Pizza - Atlanta,21338,21338,['21338'],12/31/2015 19:35:53,2,Table 24,Leo,24.0,Main,Front,Dinner,Dine In,0.0,18.5,1.48,3.33,0.0,23.31,False,12/31/2015 19:47:53,12/31/2015 19:47:53,0 days 00:12:00,In store
+Tony's Pizza - Atlanta,21339,21339,['21339'],12/31/2015 19:46:24,1,,Sofia,,Main,,Dinner,Delivery,2.08,18.67,1.4936,2.8,0.0,22.96,False,12/31/2015 19:57:24,12/31/2015 19:58:24,0 days 00:11:00,Online
+Tony's Pizza - Atlanta,21340,21340,['21340'],12/31/2015 19:51:52,2,,Liam,,Main,,Dinner,Takeout,0.0,32.0,2.56,0.0,0.0,34.56,False,12/31/2015 19:53:52,12/31/2015 19:54:52,0 days 00:02:00,In store
+Tony's Pizza - Atlanta,21341,21341,['21341'],12/31/2015 19:52:09,2,,Noah,,Main,,Dinner,Takeout,0.0,12.5,1.0,0.0,0.0,13.5,False,12/31/2015 20:02:09,12/31/2015 20:03:09,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21342,21342,['21342'],12/31/2015 20:02:57,1,,Noah,,Main,,Dinner,Takeout,0.0,67.5,5.4,0.0,0.0,72.9,False,12/31/2015 20:06:57,12/31/2015 20:07:57,0 days 00:04:00,In store
+Tony's Pizza - Atlanta,21343,21343,['21343'],12/31/2015 20:27:23,1,,Sofia,,Main,,Dinner,Takeout,0.0,72.75,5.82,3.64,0.0,82.21,False,12/31/2015 20:28:23,12/31/2015 20:30:23,0 days 00:01:00,In store
+Tony's Pizza - Atlanta,21344,21344,['21344'],12/31/2015 20:43:46,1,Table 3,Sofia,3.0,Main,,Dinner,Dine In,0.0,47.5,3.8,7.12,0.0,58.42,False,12/31/2015 20:51:46,12/31/2015 20:53:46,0 days 00:08:00,In store
+Tony's Pizza - Atlanta,21345,21345,['21345'],12/31/2015 20:44:43,1,,Mia,,Main,,Dinner,Takeout,0.0,28.5,2.28,0.0,0.0,30.78,False,12/31/2015 20:57:43,12/31/2015 20:59:43,0 days 00:13:00,In store
+Tony's Pizza - Atlanta,21346,21346,['21346'],12/31/2015 20:51:07,1,Table 12,Leo,12.0,Main,,Dinner,Dine In,0.0,62.25,4.98,11.2,0.0,78.43,False,12/31/2015 21:01:07,12/31/2015 21:01:07,0 days 00:10:00,In store
+Tony's Pizza - Atlanta,21347,21347,['21347'],12/31/2015 21:14:37,4,Table 27,Noah,27.0,Main,Patio,Dinner,Dine In,0.0,66.5,5.32,13.3,0.0,85.12,False,12/31/2015 21:18:37,12/31/2015 21:19:37,0 days 00:04:00,In store
+Tony's Pizza - Atlanta,21348,21348,['21348'],12/31/2015 21:23:10,1,Table 27,Ava,27.0,Main,Patio,Dinner,Dine In,0.0,46.7,3.736,9.34,0.0,59.78,False,12/31/2015 21:42:10,12/31/2015 21:42:10,0 days 00:19:00,In store
+Tony's Pizza - Atlanta,21349,21349,['21349'],12/31/2015 22:09:54,3,Table 28,Mia,28.0,Main,Front,Late Night,Dine In,0.0,20.25,1.62,3.64,0.0,25.51,False,12/31/2015 22:20:54,12/31/2015 22:22:54,0 days 00:11:00,In store
+Tony's Pizza - Atlanta,21350,21350,['21350'],12/31/2015 23:02:05,4,,Mia,,Main,,Late Night,Takeout,0.0,12.75,1.02,0.64,0.0,14.41,False,12/31/2015 23:06:05,12/31/2015 23:09:05,0 days 00:04:00,In store
