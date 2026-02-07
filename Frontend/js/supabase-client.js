@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════
 
 // ─── PASTE YOUR KEYS HERE ────────────────────
-const SUPABASE_URL  = 'https://ifycpxtpyysuthnknptl.supabase.co';
+const SUPABASE_URL  = '';
 const SUPABASE_ANON = "";
 // ──────────────────────────────────────────────
 
