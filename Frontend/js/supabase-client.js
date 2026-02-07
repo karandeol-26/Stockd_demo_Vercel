@@ -4,8 +4,9 @@
 // ═══════════════════════════════════════════════
 
 // ─── PASTE YOUR KEYS HERE ────────────────────
-const SUPABASE_URL  = '';
-const SUPABASE_ANON = "";
+// NOTE: anon key is safe to expose in frontend (RLS enforced). Service key must NEVER be used here.
+const SUPABASE_URL  = window.__SUPABASE_URL || '';
+const SUPABASE_ANON = window.__SUPABASE_ANON_KEY || '';
 // ──────────────────────────────────────────────
 
 if (!SUPABASE_ANON) {
