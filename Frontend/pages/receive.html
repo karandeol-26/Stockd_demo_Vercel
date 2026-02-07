@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantIQ — Receive Inventory</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <div class="topnav-icon">R</div>
+      <div><div class="topnav-title">RestaurantIQ</div><div class="topnav-sub">Receive Delivery</div></div>
+    </div>
+    <div class="topnav-links">
+      <button class="topnav-link" onclick="go('dashboard')">Dashboard</button>
+      <button class="topnav-link" onclick="go('upload')">Upload</button>
+      <button class="topnav-link active" onclick="go('receive')">Receive</button>
+      <button class="topnav-link" onclick="go('count')">Count</button>
+    </div>
+    <div class="topnav-actions">
+      <button class="btn btn-outline" onclick="signOut()">⏻</button>
+    </div>
+  </nav>
+
+  <div class="page-narrow">
+    <h1 style="color:var(--text-primary);font-size:22px;margin-bottom:8px;" class="animate-in">
+      Receive Inventory
+    </h1>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:28px;" class="animate-in stagger-1">
+      Record a delivery to increase on-hand stock for an ingredient.
+    </p>
+
+    <div class="card animate-in stagger-2">
+      <div class="form-group">
+        <label class="form-label">Ingredient</label>
+        <select class="form-select" id="ingredient-select">
+          <option value="">Loading ingredients...</option>
+        </select>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:4px;" id="current-stock"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Quantity Received</label>
+        <input type="number" class="form-input mono" id="qty-input"
+               placeholder="0" min="0.01" step="0.01">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Note (optional)</label>
+        <input type="text" class="form-input" id="note-input"
+               placeholder="e.g. Weekly delivery from Sysco">
+      </div>
+
+      <button class="btn btn-primary btn-block btn-lg" id="submit-btn" onclick="submitReceive()">
+        Receive Inventory
+      </button>
+
+      <div id="status-msg"></div>
+    </div>
+
+    <!-- Recent receipts -->
+    <div class="section-header"><h2>Recent Receipts</h2></div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="data-table">
+        <thead>
+          <tr><th>Date</th><th>Ingredient</th><th>Qty</th><th>Note</th></tr>
+        </thead>
+        <tbody id="receipts-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="page-footer">RestaurantIQ v0.1</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script>
+    function go(page) { window.location.href = page + '.html'; }
+
+    let ingredients = [];
+
+    (async () => {
+      await requireAuth('../login.html');
+      await loadIngredients();
+      loadRecentReceipts();
+    })();
+
+    async function loadIngredients() {
+      const { data, error } = await sb.from('ingredients').select('id, name, unit');
+      if (error) { showToast('Failed to load ingredients', 'error'); return; }
+      ingredients = data || [];
+
+      const sel = document.getElementById('ingredient-select');
+      sel.innerHTML = '<option value="">— Select ingredient —</option>' +
+        ingredients.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('');
+
+      sel.addEventListener('change', async () => {
+        const id = sel.value;
+        if (!id) { document.getElementById('current-stock').textContent = ''; return; }
+        // Fetch current on-hand
+        const { data: oh } = await sb.from('inventory_on_hand').select('qty_on_hand').eq('ingredient_id', id).single();
+        const ing = ingredients.find(i => i.id === id);
+        document.getElementById('current-stock').textContent =
+          oh ? `Current on-hand: ${oh.qty_on_hand} ${ing?.unit || ''}` : 'No inventory record yet';
+      });
+    }
+
+    async function submitReceive() {
+      const id = document.getElementById('ingredient-select').value;
+      const qty = parseFloat(document.getElementById('qty-input').value);
+      const note = document.getElementById('note-input').value || null;
+
+      if (!id) { setStatus('Select an ingredient', 'error'); return; }
+      if (!qty || qty <= 0) { setStatus('Enter a valid quantity', 'error'); return; }
+
+      document.getElementById('submit-btn').disabled = true;
+      setStatus('Processing...', 'info');
+
+      const { data, error } = await sb.rpc('receive_inventory', {
+        p_ingredient_id: id, p_qty: qty, p_note: note
+      });
+
+      if (error || data?.status === 'error') {
+        setStatus('❌ ' + (data?.message || error?.message), 'error');
+        document.getElementById('submit-btn').disabled = false;
+        return;
+      }
+
+      const ing = ingredients.find(i => i.id === id);
+      setStatus(`✅ Received ${qty} ${ing?.unit || ''} of ${ing?.name}. New on-hand: ${data.new_qty_on_hand}`, 'success');
+      showToast('Delivery recorded!', 'success');
+
+      document.getElementById('qty-input').value = '';
+      document.getElementById('note-input').value = '';
+      document.getElementById('current-stock').textContent = `Current on-hand: ${data.new_qty_on_hand} ${ing?.unit || ''}`;
+      document.getElementById('submit-btn').disabled = false;
+      loadRecentReceipts();
+    }
+
+    async function loadRecentReceipts() {
+      const { data } = await sb
+        .from('inventory_txns')
+        .select('created_at, qty_delta, note, ingredients(name, unit)')
+        .eq('txn_type', 'RECEIVE')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      document.getElementById('receipts-tbody').innerHTML = (data || []).map(t => `
+        <tr>
+          <td class="mono" style="font-size:12px;">${new Date(t.created_at).toLocaleDateString()}</td>
+          <td style="color:var(--text-primary)">${t.ingredients?.name || '—'}</td>
+          <td class="mono" style="color:var(--accent)">+${t.qty_delta} ${t.ingredients?.unit || ''}</td>
+          <td style="color:var(--text-muted);font-size:12px;">${t.note || '—'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No receipts yet</td></tr>';
+    }
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('status-msg');
+      el.className = `status-msg ${type}`;
+      el.textContent = msg;
+    }
+  </script>
+</body>
+</html>

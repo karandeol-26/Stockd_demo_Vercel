@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantIQ — Dashboard</title>
+  <link rel="stylesheet" href="../css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+
+  <!-- Top Nav -->
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <div class="topnav-icon">R</div>
+      <div>
+        <div class="topnav-title">RestaurantIQ</div>
+        <div class="topnav-sub">Inventory & Forecasting</div>
+      </div>
+    </div>
+    <div class="topnav-links">
+      <button class="topnav-link active" onclick="go('dashboard')">Dashboard</button>
+      <button class="topnav-link" onclick="go('upload')">Upload</button>
+      <button class="topnav-link" onclick="go('receive')">Receive</button>
+      <button class="topnav-link" onclick="go('count')">Count</button>
+    </div>
+    <div class="topnav-actions">
+      <button class="btn btn-primary" onclick="go('upload')">↑ Upload Report</button>
+      <button class="btn btn-outline" onclick="signOut()" title="Sign out">⏻</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="page-container" id="main-content" style="opacity:0;transition:opacity 0.5s;">
+
+    <!-- Alert Banner (filled by JS) -->
+    <div id="alert-banner"></div>
+
+    <!-- KPI Cards -->
+    <div class="grid-4" id="kpi-grid">
+      <div class="card stat-card animate-in stagger-1">
+        <div class="stat-icon">$</div>
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value" id="kpi-revenue">—</div>
+        <div class="stat-sub" id="kpi-revenue-sub"></div>
+        <div class="card-accent-bar"></div>
+      </div>
+      <div class="card stat-card animate-in stagger-2">
+        <div class="stat-icon">◎</div>
+        <div class="stat-label">Avg Daily Revenue</div>
+        <div class="stat-value" id="kpi-daily">—</div>
+        <div class="stat-sub" id="kpi-daily-sub"></div>
+        <div class="card-accent-bar" style="background:linear-gradient(90deg,var(--blue),transparent);"></div>
+      </div>
+      <div class="card stat-card animate-in stagger-3">
+        <div class="stat-icon">!</div>
+        <div class="stat-label">Inventory Alerts</div>
+        <div class="stat-value" id="kpi-alerts">—</div>
+        <div class="stat-sub" id="kpi-alerts-sub"></div>
+        <div class="card-accent-bar" style="background:linear-gradient(90deg,var(--red),transparent);"></div>
+      </div>
+      <div class="card stat-card animate-in stagger-4">
+        <div class="stat-icon">◈</div>
+        <div class="stat-label">Menu Items</div>
+        <div class="stat-value" id="kpi-items">—</div>
+        <div class="stat-sub" id="kpi-items-sub"></div>
+        <div class="card-accent-bar" style="background:linear-gradient(90deg,var(--purple),transparent);"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid-2 mt-24">
+      <div class="card">
+        <div class="section-header" style="margin-top:0;">
+          <h2>Revenue Trend</h2>
+        </div>
+        <canvas id="revenue-chart" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="section-header" style="margin-top:0;">
+          <h2>Sales by Category</h2>
+        </div>
+        <canvas id="category-chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Inventory Snapshot Table -->
+    <div class="section-header">
+      <h2>Inventory Snapshot</h2>
+      <button class="btn btn-secondary" onclick="loadDashboard()">↻ Refresh</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div id="inventory-empty" class="empty-state" style="display:none;">
+        <div class="icon">📦</div>
+        <h3>No inventory data yet</h3>
+        <p>Add ingredients and BOM recipes in the admin panel, then run a daily close to see inventory here.</p>
+      </div>
+      <table class="data-table" id="inventory-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>On Hand</th>
+            <th>Reorder Pt</th>
+            <th>Avg Daily Use</th>
+            <th>Days of Supply</th>
+            <th>Days to Reorder</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Bottom Row: Top Sellers + Alerts Detail -->
+    <div class="grid-2 mt-24">
+      <!-- Top Sellers -->
+      <div class="card">
+        <div class="section-header" style="margin-top:0;">
+          <h2>Top Selling Items</h2>
+        </div>
+        <div id="top-sellers"></div>
+      </div>
+      <!-- Alerts -->
+      <div class="card">
+        <div class="section-header" style="margin-top:0;">
+          <h2>Alerts & Actions</h2>
+        </div>
+        <div id="alerts-detail"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn btn-secondary" style="flex:1;" onclick="go('receive')">Receive Delivery</button>
+          <button class="btn btn-blue" style="flex:1;" onclick="go('count')">Physical Count</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">RestaurantIQ v0.1 · UGAHacks 11 · Data from Supabase</div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading">
+    <div style="text-align:center;">
+      <div class="loading-spinner" style="margin:0 auto 16px;"></div>
+      <div style="color:var(--text-muted);font-size:13px;">Loading dashboard...</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script>
+    // ─── Navigation ──────────────────────────
+    function go(page) { window.location.href = page + '.html'; }
+
+    // ─── Init ────────────────────────────────
+    (async () => {
+      const session = await requireAuth('../login.html');
+      if (!session) return;
+      await loadDashboard();
+    })();
+
+    // ─── Main Load ───────────────────────────
+    async function loadDashboard() {
+      try {
+        const [inventory, salesTrend, topSellers, categories, menuCount] = await Promise.all([
+          fetchInventory(),
+          fetchSalesTrend(),
+          fetchTopSellers(),
+          fetchCategories(),
+          fetchMenuItemCount()
+        ]);
+
+        renderKPIs(salesTrend, inventory, menuCount);
+        renderInventory(inventory);
+        renderRevenueChart(salesTrend);
+        renderCategoryChart(categories);
+        renderTopSellers(topSellers);
+        renderAlerts(inventory);
+
+      } catch (err) {
+        console.error('Dashboard error:', err);
+        showToast('Failed to load data: ' + err.message, 'error');
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('main-content').style.opacity = '1';
+      }
+    }
+
+    // ─── Data Fetchers ───────────────────────
+
+    async function fetchInventory() {
+      const { data, error } = await sb.rpc('get_inventory_snapshot');
+      if (error) throw error;
+      // RPC returns a jsonb array (might be array or might need parsing)
+      if (Array.isArray(data)) return data;
+      if (typeof data === 'string') return JSON.parse(data);
+      return data || [];
+    }
+
+    async function fetchSalesTrend() {
+      const { data, error } = await sb
+        .from('sales_line_items')
+        .select('business_date, qty, net_sales');
+      if (error) throw error;
+
+      // Group by date
+      const byDate = {};
+      (data || []).forEach(r => {
+        if (!byDate[r.business_date]) {
+          byDate[r.business_date] = { date: r.business_date, revenue: 0, orders: 0 };
+        }
+        byDate[r.business_date].revenue += r.net_sales;
+        byDate[r.business_date].orders += r.qty;
+      });
+
+      return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    async function fetchTopSellers() {
+      const { data, error } = await sb
+        .from('sales_line_items')
+        .select('menu_item_id, qty, net_sales, menu_items(name, category)');
+      if (error) throw error;
+
+      const byItem = {};
+      (data || []).forEach(r => {
+        const id = r.menu_item_id;
+        if (!byItem[id]) {
+          byItem[id] = {
+            name: r.menu_items?.name || 'Unknown',
+            category: r.menu_items?.category || '',
+            totalQty: 0,
+            totalSales: 0
+          };
+        }
+        byItem[id].totalQty += r.qty;
+        byItem[id].totalSales += r.net_sales;
+      });
+
+      return Object.values(byItem)
+        .sort((a, b) => b.totalQty - a.totalQty)
+        .slice(0, 8);
+    }
+
+    async function fetchCategories() {
+      const { data, error } = await sb
+        .from('sales_line_items')
+        .select('qty, net_sales, menu_items(category)');
+      if (error) throw error;
+
+      const byCat = {};
+      (data || []).forEach(r => {
+        const cat = r.menu_items?.category || 'Other';
+        if (!byCat[cat]) byCat[cat] = { name: cat, sales: 0, qty: 0 };
+        byCat[cat].sales += r.net_sales;
+        byCat[cat].qty += r.qty;
+      });
+
+      return Object.values(byCat).sort((a, b) => b.sales - a.sales);
+    }
+
+    async function fetchMenuItemCount() {
+      const { count, error } = await sb
+        .from('menu_items')
+        .select('id', { count: 'exact', head: true });
+      return count || 0;
+    }
+
+    // ─── Renderers ───────────────────────────
+
+    function renderKPIs(sales, inventory, menuCount) {
+      const totalRev = sales.reduce((s, d) => s + d.revenue, 0);
+      const numDays = sales.length || 1;
+      const avgDaily = totalRev / numDays;
+
+      const critical = (inventory || []).filter(i => i.status === 'critical').length;
+      const reorder = (inventory || []).filter(i => i.status === 'reorder_soon').length;
+      const alerts = critical + reorder;
+
+      document.getElementById('kpi-revenue').textContent = '$' + Math.round(totalRev).toLocaleString();
+      document.getElementById('kpi-revenue-sub').textContent = `${numDays} business days`;
+      document.getElementById('kpi-daily').textContent = '$' + Math.round(avgDaily).toLocaleString();
+      document.getElementById('kpi-daily-sub').textContent = `${Math.round(sales.reduce((s,d) => s + d.orders, 0) / numDays)} items/day avg`;
+      document.getElementById('kpi-alerts').textContent = alerts;
+      document.getElementById('kpi-alerts-sub').textContent = `${critical} critical, ${reorder} low`;
+      document.getElementById('kpi-items').textContent = menuCount;
+      document.getElementById('kpi-items-sub').textContent = `Across ${new Set((inventory||[]).map(i=>i.unit)).size || '—'} ingredient units`;
+
+      // Alert banner
+      if (alerts > 0) {
+        document.getElementById('alert-banner').innerHTML = `
+          <div class="alert-banner critical">
+            <div class="alert-icon" style="animation:pulse 1.5s infinite;">⚠</div>
+            <div class="alert-body">
+              <div class="alert-title">${critical} Critical · ${reorder} Reorder Soon</div>
+              <div class="alert-text">${inventory.filter(i => i.status === 'critical')[0]?.name || 'Items'} need immediate attention</div>
+            </div>
+            <button class="btn btn-danger" onclick="document.getElementById('inventory-table').scrollIntoView({behavior:'smooth'})">View</button>
+          </div>
+        `;
+      }
+    }
+
+    function renderInventory(items) {
+      if (!items || items.length === 0) {
+        document.getElementById('inventory-empty').style.display = 'block';
+        document.getElementById('inventory-table').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('inventory-empty').style.display = 'none';
+      document.getElementById('inventory-table').style.display = 'table';
+
+      const tbody = document.getElementById('inventory-tbody');
+      tbody.innerHTML = items.map(i => {
+        const status = i.status || 'unknown';
+        const badgeClass = status === 'critical' ? 'badge-critical'
+          : status === 'reorder_soon' ? 'badge-warning'
+          : status === 'unknown' ? 'badge-unknown'
+          : 'badge-ok';
+
+        const qtyColor = status === 'critical' ? 'var(--red-soft)'
+          : status === 'reorder_soon' ? 'var(--orange-soft)'
+          : 'var(--text-secondary)';
+
+        const dos = i.days_of_supply != null ? i.days_of_supply + 'd' : '—';
+        const dosColor = i.days_of_supply != null
+          ? (i.days_of_supply <= 1 ? 'var(--red)' : i.days_of_supply <= 3 ? 'var(--orange)' : 'var(--accent)')
+          : 'var(--text-muted)';
+
+        const dtr = i.days_to_reorder != null ? i.days_to_reorder + 'd' : '—';
+        const barPct = i.days_of_supply != null ? Math.min(100, (i.days_of_supply / 14) * 100) : 0;
+
+        return `
+          <tr>
+            <td>
+              <div style="color:var(--text-primary);font-weight:500;">${i.name}</div>
+              <div style="color:var(--text-dim);font-size:11px;">${i.unit || ''}</div>
+            </td>
+            <td class="mono" style="color:${qtyColor}">${num(i.qty_on_hand)}</td>
+            <td class="mono" style="color:var(--text-muted)">${num(i.reorder_point)}</td>
+            <td class="mono" style="color:var(--text-muted)">${i.avg_daily_usage ? i.avg_daily_usage.toFixed(2) : '—'}</td>
+            <td>
+              <span class="mono" style="color:${dosColor};font-size:13px;">${dos}</span>
+              <div class="mini-bar">
+                <div class="mini-bar-fill" style="width:${barPct}%;background:${dosColor};"></div>
+              </div>
+            </td>
+            <td class="mono" style="color:var(--text-muted)">${dtr}</td>
+            <td><span class="badge ${badgeClass}">${status.replace('_', ' ')}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderRevenueChart(sales) {
+      const canvas = document.getElementById('revenue-chart');
+      // Show last 30 days (or all if fewer)
+      const recent = sales.slice(-30);
+
+      new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: recent.map(d => {
+            const parts = d.date.split('-');
+            return parts[1] + '/' + parts[2];
+          }),
+          datasets: [{
+            label: 'Daily Revenue',
+            data: recent.map(d => Math.round(d.revenue)),
+            borderColor: '#00d4aa',
+            backgroundColor: 'rgba(0,212,170,0.08)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 1.5,
+            pointHoverRadius: 5,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              ticks: { color: '#4a5070', maxTicksLimit: 8, font: { size: 10 } },
+              grid: { color: '#1e2230' }
+            },
+            y: {
+              ticks: { color: '#4a5070', font: { size: 10 }, callback: v => '$' + v.toLocaleString() },
+              grid: { color: '#1e2230' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderCategoryChart(categories) {
+      const canvas = document.getElementById('category-chart');
+      const colors = ['#00d4aa', '#0088ff', '#a855f7', '#ff9500', '#ff6b9d', '#34c759', '#ff4444'];
+
+      new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: categories.map(c => c.name),
+          datasets: [{
+            data: categories.map(c => Math.round(c.sales)),
+            backgroundColor: colors.slice(0, categories.length),
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '55%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#6b7394', padding: 12, font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTopSellers(items) {
+      const el = document.getElementById('top-sellers');
+      if (!items.length) {
+        el.innerHTML = '<div class="empty-state"><p>No sales data yet</p></div>';
+        return;
+      }
+
+      const numDays = 365; // adjust based on your actual date range
+      el.innerHTML = items.map((item, i) => `
+        <div style="display:flex;align-items:center;gap:12px;padding:9px 0;
+                     ${i < items.length - 1 ? 'border-bottom:1px solid #1a1e2a;' : ''}">
+          <div style="width:28px;height:28px;border-radius:8px;
+                       background:rgba(0,212,170,${0.2 - i * 0.02});
+                       display:flex;align-items:center;justify-content:center;
+                       color:var(--accent);font-size:12px;font-weight:700;
+                       font-family:var(--font-mono);">${i + 1}</div>
+          <div style="flex:1;">
+            <div style="color:var(--text-primary);font-size:13px;font-weight:500;">${item.name}</div>
+            <div style="color:var(--text-dim);font-size:11px;">${item.category} · $${Math.round(item.totalSales).toLocaleString()}</div>
+          </div>
+          <div class="mono" style="color:var(--accent);font-size:13px;font-weight:600;">
+            ${Math.round(item.totalQty / numDays)}/day
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAlerts(inventory) {
+      const el = document.getElementById('alerts-detail');
+      const alerts = (inventory || []).filter(i => i.status === 'critical' || i.status === 'reorder_soon').slice(0, 5);
+
+      if (!alerts.length) {
+        el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--accent);font-size:13px;">✅ All inventory levels healthy</div>';
+        return;
+      }
+
+      el.innerHTML = alerts.map(item => {
+        const isCrit = item.status === 'critical';
+        return `
+          <div class="alert-item ${isCrit ? 'alert-critical' : 'alert-warning'}">
+            <span class="alert-icon">${isCrit ? '🔴' : '🟡'}</span>
+            <div>
+              <strong>${item.name}</strong>
+              <p>${num(item.qty_on_hand)} ${item.unit} on hand · ~${item.days_of_supply ?? '?'} days supply</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ─── Helpers ─────────────────────────────
+    function num(v) { return v != null ? parseFloat(v).toFixed(1) : '—'; }
+  </script>
+</body>
+</html>

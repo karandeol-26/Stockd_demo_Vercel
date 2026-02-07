@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantIQ — Physical Count</title>
+  <link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+
+  <nav class="topnav">
+    <div class="topnav-brand">
+      <div class="topnav-icon">R</div>
+      <div><div class="topnav-title">RestaurantIQ</div><div class="topnav-sub">Physical Count</div></div>
+    </div>
+    <div class="topnav-links">
+      <button class="topnav-link" onclick="go('dashboard')">Dashboard</button>
+      <button class="topnav-link" onclick="go('upload')">Upload</button>
+      <button class="topnav-link" onclick="go('receive')">Receive</button>
+      <button class="topnav-link active" onclick="go('count')">Count</button>
+    </div>
+    <div class="topnav-actions">
+      <button class="btn btn-outline" onclick="signOut()">⏻</button>
+    </div>
+  </nav>
+
+  <div class="page-narrow">
+    <h1 style="color:var(--text-primary);font-size:22px;margin-bottom:8px;" class="animate-in">
+      Physical Count
+    </h1>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:28px;" class="animate-in stagger-1">
+      Correct inventory levels after a physical stock count. The system records the delta
+      and adjusts on-hand quantities.
+    </p>
+
+    <div class="card animate-in stagger-2">
+      <div class="form-group">
+        <label class="form-label">Ingredient</label>
+        <select class="form-select" id="ingredient-select">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+
+      <div id="current-info" style="display:none;margin-bottom:16px;">
+        <div class="alert-banner info" style="margin-bottom:0;">
+          <div class="alert-icon">📦</div>
+          <div class="alert-body">
+            <div class="alert-title" id="info-title">—</div>
+            <div class="alert-text" id="info-text">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Actual Counted Quantity</label>
+        <input type="number" class="form-input mono" id="qty-input"
+               placeholder="0" min="0" step="0.01">
+      </div>
+
+      <button class="btn btn-primary btn-block btn-lg" id="submit-btn" onclick="submitCount()">
+        Submit Count
+      </button>
+
+      <div id="status-msg"></div>
+    </div>
+
+    <!-- Recent counts -->
+    <div class="section-header"><h2>Recent Counts</h2></div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="data-table">
+        <thead>
+          <tr><th>Date</th><th>Ingredient</th><th>Delta</th><th>Note</th></tr>
+        </thead>
+        <tbody id="counts-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="page-footer">RestaurantIQ v0.1</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script>
+    function go(page) { window.location.href = page + '.html'; }
+
+    let ingredients = [];
+
+    (async () => {
+      await requireAuth('../login.html');
+      await loadIngredients();
+      loadRecentCounts();
+    })();
+
+    async function loadIngredients() {
+      const { data } = await sb.from('ingredients').select('id, name, unit');
+      ingredients = data || [];
+
+      const sel = document.getElementById('ingredient-select');
+      sel.innerHTML = '<option value="">— Select ingredient —</option>' +
+        ingredients.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('');
+
+      sel.addEventListener('change', async () => {
+        const id = sel.value;
+        const info = document.getElementById('current-info');
+        if (!id) { info.style.display = 'none'; return; }
+
+        const ing = ingredients.find(i => i.id === id);
+        const { data: oh } = await sb.from('inventory_on_hand').select('qty_on_hand').eq('ingredient_id', id).single();
+
+        info.style.display = 'block';
+        document.getElementById('info-title').textContent =
+          `${ing.name}: ${oh ? oh.qty_on_hand : 0} ${ing.unit} on hand`;
+        document.getElementById('info-text').textContent =
+          'Enter the actual counted quantity below. The system will compute and record the difference.';
+      });
+    }
+
+    async function submitCount() {
+      const id = document.getElementById('ingredient-select').value;
+      const qty = parseFloat(document.getElementById('qty-input').value);
+
+      if (!id) { setStatus('Select an ingredient', 'error'); return; }
+      if (qty == null || qty < 0 || isNaN(qty)) { setStatus('Enter a valid quantity (≥ 0)', 'error'); return; }
+
+      document.getElementById('submit-btn').disabled = true;
+      setStatus('Processing...', 'info');
+
+      const { data, error } = await sb.rpc('count_inventory', {
+        p_ingredient_id: id, p_actual_qty: qty
+      });
+
+      if (error || data?.status === 'error') {
+        setStatus('❌ ' + (data?.message || error?.message), 'error');
+        document.getElementById('submit-btn').disabled = false;
+        return;
+      }
+
+      const ing = ingredients.find(i => i.id === id);
+      const delta = data.delta;
+      const sign = delta >= 0 ? '+' : '';
+
+      setStatus(
+        `✅ Count recorded for ${ing?.name}. ` +
+        `Previous: ${data.previous_qty} → Actual: ${data.actual_qty} ` +
+        `(${sign}${delta} ${ing?.unit || ''})`,
+        'success'
+      );
+      showToast('Count recorded!', 'success');
+
+      document.getElementById('qty-input').value = '';
+      document.getElementById('info-title').textContent =
+        `${ing.name}: ${data.new_qty_on_hand} ${ing.unit} on hand`;
+      document.getElementById('submit-btn').disabled = false;
+      loadRecentCounts();
+    }
+
+    async function loadRecentCounts() {
+      const { data } = await sb
+        .from('inventory_txns')
+        .select('created_at, qty_delta, note, ingredients(name, unit)')
+        .eq('txn_type', 'COUNT')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      document.getElementById('counts-tbody').innerHTML = (data || []).map(t => {
+        const color = t.qty_delta >= 0 ? 'var(--accent)' : 'var(--red-soft)';
+        const sign = t.qty_delta >= 0 ? '+' : '';
+        return `
+          <tr>
+            <td class="mono" style="font-size:12px;">${new Date(t.created_at).toLocaleDateString()}</td>
+            <td style="color:var(--text-primary)">${t.ingredients?.name || '—'}</td>
+            <td class="mono" style="color:${color}">${sign}${t.qty_delta} ${t.ingredients?.unit || ''}</td>
+            <td style="color:var(--text-muted);font-size:12px;">${t.note || '—'}</td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No counts yet</td></tr>';
+    }
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('status-msg');
+      el.className = `status-msg ${type}`;
+      el.textContent = msg;
+    }
+  </script>
+</body>
+</html>

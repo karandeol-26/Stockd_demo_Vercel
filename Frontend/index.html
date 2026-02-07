@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantIQ</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="loading-overlay" id="loading">
+    <div style="text-align:center;">
+      <div class="loading-spinner" style="margin:0 auto 16px;"></div>
+      <div style="color:var(--text-muted);font-size:13px;">Loading RestaurantIQ...</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    (async () => {
+      const dest = await routeByOnboarding();
+      window.location.href = dest === 'onboarding'
+        ? 'pages/onboarding.html'
+        : 'pages/dashboard.html';
+    })();
+  </script>
+</body>
+</html>

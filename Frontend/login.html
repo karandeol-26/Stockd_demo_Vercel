@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantIQ — Sign In</title>
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(0,212,170,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,136,255,0.03) 0%, transparent 50%),
+        var(--bg-base);
+    }
+    .login-card {
+      width: 380px;
+      max-width: 90vw;
+    }
+    .login-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .login-logo .topnav-icon {
+      width: 52px; height: 52px;
+      font-size: 24px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+    }
+    .login-divider {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--text-faint); font-size: 11px; margin: 18px 0;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .login-divider::before, .login-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .error-text {
+      color: var(--red-soft);
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="topnav-icon flex-center">R</div>
+        <div style="font-size:22px;font-weight:700;color:var(--text-primary);">RestaurantIQ</div>
+        <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;">
+          Inventory & Forecasting
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="email" placeholder="you@restaurant.com" autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="password" placeholder="••••••••">
+        </div>
+
+        <div class="error-text" id="error-msg"></div>
+
+        <button class="btn btn-primary btn-block btn-lg mt-16" id="login-btn" onclick="doLogin()">
+          Sign In
+        </button>
+
+        <div class="login-divider">or</div>
+
+        <button class="btn btn-outline btn-block" onclick="doSignUp()">
+          Create Account
+        </button>
+      </div>
+
+      <div style="text-align:center;margin-top:20px;color:var(--text-faint);font-size:11px;">
+        UGAHacks 11 · Powered by Supabase
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    // If already logged in, go to app
+    (async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) window.location.href = 'index.html';
+    })();
+
+    // Handle Enter key
+    document.getElementById('password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    async function doLogin() {
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value;
+      if (!email || !pass) { showError('Enter email and password'); return; }
+
+      setLoading(true);
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+      if (error) {
+        showError(error.message);
+        setLoading(false);
+      } else {
+        window.location.href = 'index.html';
+      }
+    }
+
+    async function doSignUp() {
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value;
+      if (!email || !pass) { showError('Enter email and password'); return; }
+      if (pass.length < 6) { showError('Password must be at least 6 characters'); return; }
+
+      setLoading(true);
+      const { error } = await sb.auth.signUp({ email, password: pass });
+
+      if (error) {
+        showError(error.message);
+        setLoading(false);
+      } else {
+        showError('');
+        document.querySelector('.card').innerHTML = `
+          <div style="text-align:center;padding:20px;">
+            <div style="font-size:36px;margin-bottom:12px;">✉️</div>
+            <h3 style="color:var(--text-primary);margin-bottom:8px;">Check your email</h3>
+            <p style="color:var(--text-muted);font-size:13px;">
+              We sent a confirmation link to <strong>${email}</strong>.<br>
+              Click it to activate your account, then sign in.
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function setLoading(loading) {
+      const btn = document.getElementById('login-btn');
+      if (btn) {
+        btn.disabled = loading;
+        btn.textContent = loading ? 'Signing in...' : 'Sign In';
+      }
+    }
+  </script>
+</body>
+</html>
