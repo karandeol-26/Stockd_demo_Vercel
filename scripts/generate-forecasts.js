@@ -12,7 +12,7 @@ async function main() {
   // Generate forecast for next 7 days
   const { data, error } = await supabase.rpc('generate_forecast', {
     p_days_ahead: 7,
-    p_reference_date: '2016-01-01'
+    p_reference_date: '2026-02-08'
   });
 
   if (error) {
