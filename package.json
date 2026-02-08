@@ -8,7 +8,8 @@
     "test:watch": "jest --runInBand --watch",
     "config": "node scripts/generate-config.js",
     "start": "npx serve Frontend",
-    "start:backend": "node Backend/server.js"
+    "start:backend": "node Backend/server.js",
+    "start:kiosk": "npx serve kiosk -l 3000"
   },
   "repository": {
     "type": "git",
