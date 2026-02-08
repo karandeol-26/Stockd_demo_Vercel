@@ -68,16 +68,20 @@
     <!-- Charts Row -->
     <div class="grid-2 mt-24">
       <div class="card">
-        <div class="section-header" style="margin-top:0;">
+        <div class="section-header" style="margin-top:0; margin-bottom: 20px;">
           <h2>Revenue Trend</h2>
         </div>
-        <canvas id="revenue-chart" height="200"></canvas>
+        <div style="height: 240px; position: relative;">
+          <canvas id="revenue-chart"></canvas>
+        </div>
       </div>
       <div class="card">
-        <div class="section-header" style="margin-top:0;">
+        <div class="section-header" style="margin-top:0; margin-bottom: 20px;">
           <h2>Sales by Category</h2>
         </div>
-        <canvas id="category-chart" height="200"></canvas>
+        <div style="height: 240px; position: relative; display:flex; justify-content:center;">
+          <canvas id="category-chart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -376,6 +380,11 @@
       const canvas = document.getElementById('revenue-chart');
       const recent = sales.slice(-30);
 
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+      gradient.addColorStop(0, 'rgba(48, 209, 88, 0.2)'); // Apple Green with opacity
+      gradient.addColorStop(1, 'rgba(48, 209, 88, 0)');
+
       new Chart(canvas, {
         type: 'line',
         data: {
@@ -386,45 +395,61 @@
           datasets: [{
             label: 'Daily Revenue',
             data: recent.map(d => Math.round(d.revenue)),
-            borderColor: '#00d4aa',
-            backgroundColor: (ctx) => {
-              const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
-              gradient.addColorStop(0, 'rgba(0, 212, 170, 0.25)');
-              gradient.addColorStop(1, 'rgba(0, 212, 170, 0)');
-              return gradient;
-            },
+            borderColor: '#30D158', // Apple Green
+            backgroundColor: gradient,
             fill: true,
-            tension: 0.35,
+            tension: 0.4, // Smoother curve
             pointRadius: 0,
             pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#00d4aa',
-            pointHoverBorderColor: '#0d0f14',
-            pointHoverBorderWidth: 2,
-            borderWidth: 2.5
+            pointHoverBackgroundColor: '#30D158',
+            pointHoverBorderColor: '#1C1C1E',
+            pointHoverBorderWidth: 3, // Thicker border for contrast
+            borderWidth: 2
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: true,
-          plugins: { legend: { display: false } },
+          maintainAspectRatio: false, // Critical for custom height
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#2C2C2E',
+              titleColor: '#FFF',
+              bodyColor: '#AEAEB2',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 10,
+              displayColors: false,
+              callbacks: {
+                label: function (context) {
+                  return '$' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          },
           scales: {
             x: {
-              ticks: { color: '#5a6080', maxTicksLimit: 8, font: { size: 11 } },
-              grid: { color: '#1e2230', drawBorder: false }
+              ticks: { color: '#86868B', maxTicksLimit: 6, font: { family: "-apple-system", size: 11 } },
+              grid: { display: false } // Cleaner look
             },
             y: {
-              ticks: { color: '#5a6080', font: { size: 11 }, callback: v => '$' + v.toLocaleString() },
-              grid: { color: '#1e2230', drawBorder: false }
+              beginAtZero: true,
+              ticks: { color: '#86868B', font: { family: "-apple-system", size: 11 }, callback: v => '$' + v.toLocaleString() },
+              grid: { color: '#38383A', drawBorder: false, borderDash: [4, 4] } // Subtle dashed grid
             }
-          }
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
         }
       });
     }
 
     function renderCategoryChart(categories) {
       const canvas = document.getElementById('category-chart');
-      // Colors matching React reference
-      const colors = ['#00d4aa', '#0088ff', '#a855f7', '#ff9500', '#ff6b9d', '#ffd60a', '#ff4444'];
+      // Apple Palette: Green, Blue, Purple, Orange, Red, Cyan, Yellow
+      const colors = ['#30D158', '#0A84FF', '#BF5AF2', '#FF9F0A', '#FF453A', '#64D2FF', '#FFD60A'];
 
       new Chart(canvas, {
         type: 'doughnut',
@@ -433,32 +458,36 @@
           datasets: [{
             data: categories.map(c => Math.round(c.sales)),
             backgroundColor: colors.slice(0, categories.length),
-            borderWidth: 0,
-            hoverOffset: 6
+            borderWidth: 2,
+            borderColor: '#1C1C1E', // Match card bg for spacing effect
+            hoverOffset: 4
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: true,
-          cutout: '55%',
+          maintainAspectRatio: false,
+          cutout: '75%', // Thinner ring
           plugins: {
             legend: {
-              position: 'bottom',
+              position: 'right', // Side legend for compact look
               labels: {
-                color: '#6b7394',
-                padding: 14,
-                font: { size: 11 },
+                color: '#AEAEB2',
+                padding: 16,
+                font: { family: "-apple-system", size: 11 },
                 usePointStyle: true,
-                pointStyle: 'circle'
+                pointStyle: 'circle',
+                boxWidth: 8
               }
             },
             tooltip: {
-              backgroundColor: '#1a1e2a',
-              borderColor: '#2a3050',
-              borderWidth: 1,
-              titleColor: '#c8cee0',
-              bodyColor: '#c8cee0'
+              backgroundColor: '#2C2C2E',
+              bodyColor: '#FFF',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1
             }
+          },
+          layout: {
+            padding: { left: 0, right: 0, top: 0, bottom: 0 }
           }
         }
       });
@@ -473,18 +502,18 @@
 
       const numDays = 365;
       el.innerHTML = items.map((item, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;
-                     ${i < items.length - 1 ? 'border-bottom:1px solid #1a1e2a;' : ''}">
-          <div style="width:28px;height:28px;border-radius:8px;
-                       background:rgba(0,212,170,${0.2 - i * 0.03});
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;
+                     ${i < items.length - 1 ? 'border-bottom:1px solid var(--border-light);' : ''}">
+          <div style="width:32px;height:32px;border-radius:10px;
+                       background:rgba(48, 209, 88, ${0.15 - i * 0.02});
                        display:flex;align-items:center;justify-content:center;
-                       color:#00d4aa;font-size:12px;font-weight:700;
-                       font-family:JetBrains Mono,monospace;">${i + 1}</div>
+                       color:var(--accent);font-size:13px;font-weight:700;
+                       font-family:var(--font-mono);">${i + 1}</div>
           <div style="flex:1;">
-            <div style="color:#e8ecf4;font-size:13px;font-weight:500;">${item.name}</div>
-            <div style="color:#4a5070;font-size:11px;">${item.category} · $${Math.round(item.totalSales).toLocaleString()}</div>
+            <div style="color:var(--text-primary);font-size:14px;font-weight:500;">${item.name}</div>
+            <div style="color:var(--text-secondary);font-size:12px;">${item.category} · $${Math.round(item.totalSales).toLocaleString()}</div>
           </div>
-          <div style="font-family:JetBrains Mono,monospace;color:#00d4aa;font-size:14px;font-weight:600;">
+          <div style="font-family:var(--font-mono);color:var(--accent);font-size:14px;font-weight:600;">
             ${Math.round(item.totalQty / numDays)}/day
           </div>
         </div>
