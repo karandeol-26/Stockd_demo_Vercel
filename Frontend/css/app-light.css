@@ -544,7 +544,9 @@ p.subtitle {
 .upload-zone:hover {
     border-color: var(--text-muted);
     background: rgba(255, 255, 255, 0.05);
-}/* ── AI Copilot ───────────────────────────── */
+}
+
+/* ── AI Copilot ───────────────────────────── */
 #ai-copilot-trigger {
     position: fixed;
     bottom: 32px;
@@ -845,4 +847,99 @@ p.subtitle {
     border-color: #007AFF;
     color: #007AFF;
     transform: translateX(2px);
+}
+
+/* ─── Forecast & Inventory Card (Dark Mode) ─── */
+.card.forecast-card {
+    background: #1C1C1E;
+    color: #FFFFFF;
+    border: 1px solid #2C2C2E;
+}
+
+.forecast-card h2 {
+    color: #FFFFFF;
+}
+
+.segmented-control {
+    background: #2C2C2E;
+    padding: 2px;
+    border-radius: 8px;
+    display: inline-flex;
+    gap: 2px;
+}
+
+.segment-btn {
+    background: transparent;
+    border: none;
+    color: #8E8E93;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.segment-btn:hover {
+    color: #FFFFFF;
+}
+
+.segment-btn.active {
+    background: #636366;
+    color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode Table Overrides */
+.forecast-card .data-table th {
+    background: #1C1C1E;
+    color: #8E8E93;
+    border-bottom: 1px solid #2C2C2E;
+}
+
+.forecast-card .data-table td {
+    color: #FFFFFF;
+    border-bottom: 1px solid #2C2C2E;
+}
+
+.forecast-card .data-table tr:hover td {
+    background: #2C2C2E;
+}
+
+/* Status Badges (Dark Mode Context) */
+.badge-critical-dark {
+    background: rgba(255, 69, 58, 0.2);
+    color: #FF453A;
+    border: 1px solid rgba(255, 69, 58, 0.3);
+}
+
+.badge-warning-dark {
+    background: rgba(255, 159, 10, 0.2);
+    color: #FF9F0A;
+    border: 1px solid rgba(255, 159, 10, 0.3);
+}
+
+.badge-ok-dark {
+    background: rgba(48, 209, 88, 0.2);
+    color: #30D158;
+    border: 1px solid rgba(48, 209, 88, 0.3);
+}
+
+/* Mini Bar (Dark Mode) */
+.mini-bar-dark {
+    background: #3A3A3C;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+    width: 60px;
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-pane.active {
+    display: block;
 }
