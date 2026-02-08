@@ -146,6 +146,7 @@
   <script src="../js/env.js"></script>
   <script src="../js/supabase-client.js"></script>
   <script src="../js/gemini-client.js"></script>
+  <script src="../js/config.js"></script>
   <script src="../js/ai-copilot.js"></script>
   <script>
     // ─── Navigation ──────────────────────────
@@ -187,6 +188,36 @@
 
     // ─── Data Fetchers ───────────────────────
 
+    /**
+     * Paginated fetch helper: loops through a table in 1000-row chunks
+     * using .range(), concatenating results until a batch returns fewer
+     * than 1000 rows. This bypasses Supabase's default 1000-row limit.
+     */
+    async function fetchAllPaginated(tableName, selectColumns) {
+      const PAGE_SIZE = 1000;
+      let allData = [];
+      let from = 0;
+
+      while (true) {
+        const { data, error } = await sb
+          .from(tableName)
+          .select(selectColumns)
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (error) throw error;
+
+        const batch = data || [];
+        allData = allData.concat(batch);
+
+        // If we got fewer than PAGE_SIZE rows, we've reached the end
+        if (batch.length < PAGE_SIZE) break;
+
+        from += PAGE_SIZE;
+      }
+
+      return allData;
+    }
+
     async function fetchInventory() {
       const { data, error } = await sb.rpc('get_inventory_snapshot');
       if (error) throw error;
@@ -196,13 +227,10 @@
     }
 
     async function fetchSalesTrend() {
-      const { data, error } = await sb
-        .from('sales_line_items')
-        .select('business_date, qty, net_sales');
-      if (error) throw error;
+      const data = await fetchAllPaginated('sales_line_items', 'business_date, qty, net_sales');
 
       const byDate = {};
-      (data || []).forEach(r => {
+      data.forEach(r => {
         if (!byDate[r.business_date]) {
           byDate[r.business_date] = { date: r.business_date, revenue: 0, orders: 0 };
         }
@@ -214,13 +242,10 @@
     }
 
     async function fetchTopSellers() {
-      const { data, error } = await sb
-        .from('sales_line_items')
-        .select('menu_item_id, qty, net_sales, menu_items(name, category)');
-      if (error) throw error;
+      const data = await fetchAllPaginated('sales_line_items', 'menu_item_id, qty, net_sales, menu_items(name, category)');
 
       const byItem = {};
-      (data || []).forEach(r => {
+      data.forEach(r => {
         const id = r.menu_item_id;
         if (!byItem[id]) {
           byItem[id] = {
@@ -240,13 +265,10 @@
     }
 
     async function fetchCategories() {
-      const { data, error } = await sb
-        .from('sales_line_items')
-        .select('qty, net_sales, menu_items(category)');
-      if (error) throw error;
+      const data = await fetchAllPaginated('sales_line_items', 'qty, net_sales, menu_items(category)');
 
       const byCat = {};
-      (data || []).forEach(r => {
+      data.forEach(r => {
         const cat = r.menu_items?.category || 'Other';
         if (!byCat[cat]) byCat[cat] = { name: cat, sales: 0, qty: 0 };
         byCat[cat].sales += r.net_sales;

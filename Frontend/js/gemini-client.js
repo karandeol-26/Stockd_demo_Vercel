@@ -159,6 +159,19 @@ const GEMINI_TOOLS = [
                 }
             },
             {
+                name: "predict_revenue",
+                description: "Forecasts future revenue for the next N days based on historical sales trends. Use this when the user asks for income, revenue, or sales projections.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        days_ahead: {
+                            type: "integer",
+                            description: "Number of days to forecast (default 7)"
+                        }
+                    }
+                }
+            },
+            {
                 name: "upsert_bom_entry",
                 description: "Update or create a recipe ingredient entry. IMPORTANT: Always ask user to confirm. Use when user wants to modify a recipe.",
                 parameters: {
@@ -196,7 +209,7 @@ CURRENT DATE: ${today}
 CAPABILITIES:
 - Check inventory levels and identify items running low
 - Analyze revenue trends and business performance
-- Generate and view demand forecasts
+- Generate and view demand forecasts (ingredients) AND revenue projections (income)
 - Help record inventory receipts and counts
 - Look up menu item recipes (BOM)
 
@@ -209,6 +222,7 @@ GUIDELINES:
 6. If an RPC returns an error, explain it in plain English.
 7. When asked "what's running low", use get_inventory_snapshot and filter for critical/reorder_soon status.
 8. For "how did we do", use get_daily_analytics or get_revenue_trend.
+9. For future income/revenue questions, use predict_revenue. Explain that it is an ESTIMATE based on recent trends.
 
 RESPONSE FORMAT:
 - Use bullet points for lists
@@ -370,6 +384,75 @@ class GeminiChat {
             case 'generate_forecast':
                 return await sb.rpc('generate_forecast', args).then(r => r.data || r.error);
 
+            case 'predict_revenue':
+                // 1. Fetch all sales data (matching dashboard source of truth)
+                const allSales = await fetchAllGeneric('sales_line_items', 'business_date, net_sales');
+
+                if (!allSales || allSales.length === 0) {
+                    return { error: "No sales data found to generate forecast." };
+                }
+
+                // 2. Aggregate by date
+                const salesByDate = {};
+                allSales.forEach(row => {
+                    const date = row.business_date;
+                    if (!salesByDate[date]) salesByDate[date] = 0;
+                    salesByDate[date] += (row.net_sales || 0);
+                });
+
+                // 3. Convert to array and sort
+                const history = Object.keys(salesByDate)
+                    .map(date => ({ date, revenue: salesByDate[date] }))
+                    .sort((a, b) => a.date.localeCompare(b.date));
+
+                // Need at least a few data points
+                if (history.length < 5) return { error: "Not enough historical data points to generate a forecast." };
+
+                // 4. Linear Regression
+                const n = history.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+
+                // Use last 90 days max to keep trend relevant
+                const recentHistory = history.slice(-90);
+                const m = recentHistory.length;
+
+                recentHistory.forEach((day, index) => {
+                    const x = index;
+                    const y = day.revenue;
+                    sumX += x;
+                    sumY += y;
+                    sumXY += (x * y);
+                    sumXX += (x * x);
+                });
+
+                const slope = (m * sumXY - sumX * sumY) / (m * sumXX - sumX * sumX);
+                const intercept = (sumY - slope * sumX) / m;
+
+                const daysAhead = args.days_ahead || 7;
+                const predictions = [];
+                // Start predicting from the day AFTER the last data point
+                const lastDateStr = recentHistory[recentHistory.length - 1].date;
+                let runningDate = new Date(lastDateStr);
+
+                for (let i = 1; i <= daysAhead; i++) {
+                    const x = m - 1 + i; // Predict next x
+                    const predictedRevenue = Math.max(0, slope * x + intercept);
+
+                    runningDate.setDate(runningDate.getDate() + 1);
+                    predictions.push({
+                        date: runningDate.toISOString().split('T')[0],
+                        predicted_revenue: Math.round(predictedRevenue)
+                    });
+                }
+
+                const trend = slope > 10 ? "increasing" : slope < -10 ? "decreasing" : "stable";
+                const slopeStr = Math.abs(Math.round(slope));
+
+                return {
+                    summary: `Forecast based on ${m} days of history. Revenue trend is ${trend} (~$${slopeStr}/day).`,
+                    predictions: predictions
+                };
+
             case 'upsert_bom_entry':
                 return await sb.rpc('upsert_bom_entry', args).then(r => r.data || r.error);
 
@@ -382,6 +465,29 @@ class GeminiChat {
         this.history = [];
         this.pendingAction = null;
     }
+}
+
+// ─── Helpers ───────────────────────────────────────────────────
+
+async function fetchAllGeneric(tableName, selectColumns) {
+    const PAGE_SIZE = 1000;
+    let allData = [];
+    let from = 0;
+
+    while (true) {
+        const { data, error } = await sb
+            .from(tableName)
+            .select(selectColumns)
+            .range(from, from + PAGE_SIZE - 1);
+
+        if (error) throw error;
+        const batch = data || [];
+        allData = allData.concat(batch);
+
+        if (batch.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+    }
+    return allData;
 }
 
 // Export singleton instance (wrapped in try-catch)
