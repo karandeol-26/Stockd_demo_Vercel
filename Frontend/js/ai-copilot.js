@@ -25,6 +25,11 @@
     trigger.title = 'Open AI Assistant';
     trigger.onclick = togglePanel;
 
+    // Only show floating button on Dashboard
+    if (!window.location.href.includes('dashboard.html')) {
+      trigger.style.display = 'none';
+    }
+
     // Chat panel
     const panel = document.createElement('div');
     panel.id = 'ai-copilot-panel';
@@ -34,7 +39,7 @@
         <div class="ai-panel-brand">
           <div class="ai-panel-icon">✨</div>
           <div>
-            <div class="ai-panel-title">RestaurantIQ AI</div>
+            <div class="ai-panel-title">Stockd AI</div>
             <div class="ai-panel-subtitle">Your intelligent assistant</div>
           </div>
         </div>
