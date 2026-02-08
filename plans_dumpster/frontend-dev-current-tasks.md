@@ -9,7 +9,8 @@
 - **Module 4** (Inventory Ops): Backend RPCs DONE — `receive_inventory` + `count_inventory` live
 - **Module 6** (Forecasting v1): Backend RPCs DONE — `generate_forecast` + `get_forecast` live
 - **BOM**: Fully seeded — 32 ingredients, 674 recipe links across all 91 menu items
-- **Backend test suite**: 36/36 tests passing, all RPCs verified bug-free
+- **Backend test suite**: 75/75 tests passing (includes register_order + forecasting end-to-end)
+- **Live orders API**: `register_order` verified end-to-end (API call → sales_line_items → inventory consumption → forecast)
 - **Production data**: 22,964 sales rows, 91 menu items, 32 ingredients, 674 BOM entries, 11,280 consume txns, 620 item forecasts, 224 ingredient forecasts
 
 ### All Backend Modules COMPLETE — Frontend is the bottleneck now.
@@ -60,6 +61,7 @@ if (!data.setup_complete) {
 - After ingest, call `run_daily_close` for the uploaded date(s)
 - Show success/error feedback after upload
 - Show count of rows processed and new menu items created
+- (Optional) After upload, call `generate_forecast()` to refresh forecasts alongside the daily close
 - **Done when:** uploading 1 day of Toast CSV creates rows and updates inventory
 
 ---
@@ -112,6 +114,20 @@ Backend RPCs are live and tested.
 
 **Done when:** manager can receive a delivery and correct inventory via physical count.
 
+### 4b. US Foods Invoice Matching (New helper available)
+
+- Backend helper: `getInvoiceMatches(pdfBuffer, supabase)` in `scripts/usfoodsInvoiceMatch.mjs`
+- What it does: parses a US Foods PDF, fuzzy-matches invoice lines to `ingredients`, and returns `{ matches, unmatched }` without mutating the DB.
+- Match shape:
+  - `matches`: [{ ingredientId, ingredientName, ingredientUnit, qtyOrdered, qtyShipped, salesUnit, productNumber, rawLine }]
+  - `unmatched`: invoice lines not matched to any ingredient
+- How to use (frontend flow):
+  1) Upload PDF (File input → `ArrayBuffer`/`Uint8Array`)
+  2) Call a tiny API that wraps `getInvoiceMatches(pdfBuffer, supabase)`
+  3) Show a confirmation table (ingredient name, qtyShipped/qtyOrdered, unit, product number)
+  4) On confirm, call `receive_inventory` per matched line using `ingredientId` and `qtyShipped` (or `qtyOrdered` fallback)
+- Existing end-to-end script example: `node scripts/receive-usfoods-invoice.mjs` (does parse + match + receive). Use that as a reference but keep the UI flow “confirm before receive”.
+
 ---
 
 ### 5. Forecast Page (Module 6) — NEW
@@ -121,6 +137,7 @@ Backend RPCs are live and tested. 620 item forecasts + 224 ingredient forecasts 
 **Forecast Dashboard:**
 - On page load, call `get_forecast()` (defaults to next 7 days from most recent data)
 - If you want to re-generate fresh forecasts first: call `generate_forecast()` then `get_forecast()`
+- Confirmed: forecasts already reflect API-registered orders (`register_order`) in tests and manual verification
 - Render table with columns:
   - Forecast date
   - Ingredient name

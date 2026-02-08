@@ -277,6 +277,8 @@ a:hover { text-decoration: underline; }
   color: var(--orange-soft);
 }
 .badge-warning::before { background: var(--orange-soft); box-shadow: 0 0 6px var(--orange-soft); }
+
+
 .badge-critical {
   background: #2d0a0a; border: 1px solid var(--red);
   color: var(--red-soft);

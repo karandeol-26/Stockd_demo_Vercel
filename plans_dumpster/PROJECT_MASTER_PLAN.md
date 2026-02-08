@@ -137,7 +137,7 @@ EVERYTHING DERIVES FROM sales_line_items:
 |--------|------|-------|---------|----------|-------|
 | **M0** | Repo + Local Setup | DevOps/Lead | DONE | DONE | Supabase linked, CLI working, auth user created |
 | **M1** | Supabase Schema | Backend | DONE | n/a | 9 tables, 2 enums, RLS, indexes |
-| **M2** | Ingestion (CSV + Orders) | Frontend + Backend | DONE | PENDING | Item-level + order-level RPCs, onboarding flow |
+| **M2** | Ingestion (CSV + Orders) | Frontend + Backend | DONE | PENDING | Item-level + order-level RPCs, register_order live orders API validated, onboarding flow |
 | **M3** | Consumption Engine | Backend | DONE | n/a | daily close, reverse, bulk close, smart snapshot |
 | **M4** | Inventory Ops | Frontend + Backend | DONE | PENDING | receive_inventory + count_inventory RPCs |
 | **M5** | Inventory Dashboard | Frontend | DONE | PENDING | get_inventory_snapshot with auto-window detection |
@@ -216,6 +216,7 @@ Can insert menu items, BOM, sales, inventory rows and query joins.
 - [x] Auto-creates missing menu_items from CSV data
 - [x] Upserts by `(business_date, menu_item_id)` — safe to re-upload
 - [x] Returns `{ status, rows_processed, menu_items_created }`
+- [x] `register_order(p_order_raw)` RPC for live API orders (idempotent by `order_id`, consumes inventory via BOM, feeds forecasts)
 - [x] `app_config` table with onboarding state tracking
 - [x] `get_onboarding_status()` RPC — frontend calls on load to route user
 - [x] `complete_onboarding_ingest()` RPC — records history date range after bulk upload
@@ -308,6 +309,18 @@ Click "Run Daily Close" for a date with sales -> inventory decrements correctly.
 - [ ] **Count Inventory page**: select ingredient, enter actual count, submit
 - [ ] Confirmation feedback after each operation
 - [ ] Show updated on-hand after submit
+
+### NEW: US Foods Invoice Matching (read-only confirm flow)
+- Helper module: `scripts/usfoodsInvoiceMatch.mjs`
+- Export: `getInvoiceMatches(pdfBuffer, supabase)` → `{ matches, unmatched }`
+  - `matches`: [{ ingredientId, ingredientName, ingredientUnit, qtyOrdered, qtyShipped, salesUnit, productNumber, rawLine }]
+  - `unmatched`: invoice lines not matched to any ingredient
+- Frontend flow to implement:
+  1) User uploads US Foods PDF
+  2) Frontend sends PDF (ArrayBuffer) to a tiny API route that calls `getInvoiceMatches`
+  3) Show confirmation table in UI (name, qtyShipped/qtyOrdered, unit, product number)
+  4) On confirm, call `receive_inventory` per matched line using `ingredientId` and `qtyShipped` (fallback to `qtyOrdered`)
+- Reference script (end-to-end parse+receive): `scripts/receive-usfoods-invoice.mjs` — keep UI confirm step before writing.
 
 ### Done When
 Manager can receive a delivery and correct inventory; snapshot reflects changes.

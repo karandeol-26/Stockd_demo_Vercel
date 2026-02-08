@@ -3,10 +3,21 @@
 // Load AFTER the Supabase CDN script
 // ═══════════════════════════════════════════════
 
+<<<<<<< HEAD
 // Keys come from js/config.js (auto-generated from .env)
 // Run: npm run config
 if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON === 'undefined') {
   console.error('⚠️  config.js not loaded. Run: npm run config');
+=======
+// ─── PASTE YOUR KEYS HERE ────────────────────
+// NOTE: anon key is safe to expose in frontend (RLS enforced). Service key must NEVER be used here.
+const SUPABASE_URL  = window.__SUPABASE_URL || '';
+const SUPABASE_ANON = window.__SUPABASE_ANON_KEY || '';
+// ──────────────────────────────────────────────
+
+if (!SUPABASE_ANON) {
+  console.error('⚠️  Set SUPABASE_ANON in js/supabase-client.js');
+>>>>>>> da34520fc8fa205e2a89884e159cdd51d61d37d7
 }
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
