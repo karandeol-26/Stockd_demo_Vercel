@@ -1,17 +1,18 @@
 # Frontend Developer — Current Tasks
 
-## Project Status (Updated Feb 7, 2026)
+## Project Status (Updated Feb 8, 2026)
 
 - **Module 0** (Repo + Setup): DONE
-- **Module 1** (Supabase Schema): DONE — 8 tables, 2 enums live in cloud
+- **Module 1** (Supabase Schema): DONE — 9 tables, 2 enums live in cloud
 - **Module 2** (Ingestion): Backend RPCs DONE — onboarding + daily ingest + bulk close all live
 - **Module 3** (Consumption Engine): DONE — daily close, reverse, snapshot RPCs all live
 - **Module 4** (Inventory Ops): Backend RPCs DONE — `receive_inventory` + `count_inventory` live
 - **Module 6** (Forecasting v1): Backend RPCs DONE — `generate_forecast` + `get_forecast` live
-- **BOM**: Fully seeded — 32 ingredients, 674 recipe links across all 91 menu items
+- **BOM**: Fully seeded — 32 ingredients, 675 recipe links across all 95 menu items
 - **Backend test suite**: 75/75 tests passing (includes register_order + forecasting end-to-end)
 - **Live orders API**: `register_order` verified end-to-end (API call → sales_line_items → inventory consumption → forecast)
-- **Production data**: 22,964 sales rows, 91 menu items, 32 ingredients, 674 BOM entries, 11,280 consume txns, 620 item forecasts, 224 ingredient forecasts
+- **Production data**: 25,396 sales rows (2025-01-01 to 2026-02-08), 95 menu items, 32 ingredients, 675 BOM entries, ~24K consume txns, 2,525 item forecasts, 926 ingredient forecasts, 21,873 daily orders
+- **Setup script**: `node scripts/setup-all.js` — single command runs the full pipeline
 
 ### All Backend Modules COMPLETE — Frontend is the bottleneck now.
 
@@ -184,7 +185,7 @@ Batch upserts sales data. Auto-creates missing menu items. Re-uploading the same
 const { data, error } = await supabase.rpc('ingest_daily_sales', {
   p_rows: [
     {
-      business_date: '2015-01-01',
+      business_date: '2025-01-01',
       menu_item_name: 'The Hawaiian Pizza (M)',
       category: 'Classic',
       qty: 10,
@@ -203,7 +204,7 @@ Call after the historical CSV has been fully ingested. Records the date range.
 
 ```js
 const { data, error } = await supabase.rpc('complete_onboarding_ingest');
-// Returns: { status: 'success', start_date: '2015-01-01', end_date: '2015-12-31', rows: 22964 }
+// Returns: { status: 'success', start_date: '2025-01-01', end_date: '2025-12-31', rows: 22964 }
 ```
 
 ### `run_bulk_close()`
@@ -221,7 +222,7 @@ Runs the consumption engine for a single date (post-setup daily use). Idempotent
 
 ```js
 const { data, error } = await supabase.rpc('run_daily_close', {
-  p_business_date: '2015-12-31'
+  p_business_date: '2025-12-31'
 });
 // Returns: { status: 'success', consume_txns_created: N, ingredients_updated: N }
 // Or:      { status: 'skipped', reason: 'already_processed' }
@@ -234,7 +235,7 @@ Reverses a daily close (deletes CONSUME txns, restores inventory). For correctio
 
 ```js
 const { data, error } = await supabase.rpc('reverse_daily_close', {
-  p_business_date: '2015-12-31'
+  p_business_date: '2025-12-31'
 });
 // Returns: { status: 'success', txns_reversed: N }
 ```
@@ -299,9 +300,9 @@ Generates item-level and ingredient-level forecasts using rolling day-of-week av
 ```js
 const { data, error } = await supabase.rpc('generate_forecast', {
   p_days_ahead: 7,                 // default 7
-  p_reference_date: '2016-01-01'   // default CURRENT_DATE
+  p_reference_date: '2026-02-08'   // default CURRENT_DATE (uses today's date dynamically in scripts)
 });
-// Returns: { status: 'success', item_forecasts: 620, ingredient_forecasts: 224 }
+// Returns: { status: 'success', item_forecasts: 2525, ingredient_forecasts: 926 }
 ```
 
 ### `get_forecast(p_reference_date)`
@@ -310,12 +311,12 @@ Returns 7-day ingredient forecast with current stock and shortfall. Call after `
 
 ```js
 const { data, error } = await supabase.rpc('get_forecast', {
-  p_reference_date: '2016-01-01'   // default CURRENT_DATE
+  p_reference_date: '2026-02-08'   // default CURRENT_DATE
 });
 // Returns array:
 // [
 //   {
-//     forecast_date: '2016-01-01',
+//     forecast_date: '2026-02-08',
 //     ingredient_id: 'uuid',
 //     name: 'Mozzarella Cheese',
 //     unit: 'oz',
@@ -361,15 +362,16 @@ When parsing `Toast_ItemSelectionDetails.csv`, map these columns:
 
 | Table | Key Columns | Rows (current) |
 |---|---|---|
-| `menu_items` | id, name, category, active | 91 |
+| `menu_items` | id, name, category, active | 95 |
 | `ingredients` | id, name, unit, reorder_point, lead_time_days, unit_cost | 32 |
-| `bom` | menu_item_id, ingredient_id, qty_per_item | 674 |
-| **`sales_line_items`** | **id, business_date, menu_item_id, qty, net_sales, source** | **22,964** |
+| `bom` | menu_item_id, ingredient_id, qty_per_item | 675 |
+| **`sales_line_items`** | **id, business_date, menu_item_id, qty, net_sales, source** | **25,396 (2025-01-01 to 2026-02-08)** |
 | `inventory_on_hand` | ingredient_id, qty_on_hand, updated_at | 32 |
-| `inventory_txns` | id, ingredient_id, txn_type, qty_delta, business_date, created_at, note | 11,280 |
-| `app_config` | key (PK), value (jsonb), updated_at | 2 |
-| `forecast_items` | id, forecast_date, menu_item_id, qty | 620 |
-| `forecast_ingredients` | id, forecast_date, ingredient_id, qty | 224 |
+| `inventory_txns` | id, ingredient_id, txn_type, qty_delta, business_date, created_at, note | ~24,000 |
+| `app_config` | key (PK), value (jsonb), updated_at | 1 |
+| `forecast_items` | id, forecast_date, menu_item_id, qty | 2,525 |
+| `forecast_ingredients` | id, forecast_date, ingredient_id, qty | 926 |
+| `daily_orders` | id, business_date, order_id, subtotal, tip, total, ... | 21,873 (synthetic from sales) |
 
 ---
 
@@ -412,10 +414,10 @@ Batch upserts order-level data from Toast OrderDetails CSV. Safe to re-upload (u
 const { data, error } = await supabase.rpc('ingest_daily_orders', {
   p_rows: [
     {
-      business_date: '2015-12-31',
+      business_date: '2025-12-31',
       order_id: '21278',
-      opened_at: '2015-12-31T11:22:31',
-      closed_at: '2015-12-31T11:32:31',
+      opened_at: '2025-12-31T11:22:31',
+      closed_at: '2025-12-31T11:32:31',
       num_guests: 3,
       server_name: 'Sofia',
       dining_area: 'Patio',
@@ -462,12 +464,12 @@ Returns full revenue breakdown for a date. If no date passed, uses most recent d
 
 ```js
 const { data } = await supabase.rpc('get_daily_analytics', {
-  p_business_date: '2015-12-31'  // optional — auto-detects if omitted
+  p_business_date: '2025-12-31'  // optional — auto-detects if omitted
 });
 // Returns:
 // {
 //   status: 'success',
-//   business_date: '2015-12-31',
+//   business_date: '2025-12-31',
 //   total_orders: 73,
 //   total_revenue: 2872.75,
 //   avg_order_value: 39.35,
@@ -499,10 +501,57 @@ Returns daily revenue trend for the last N days of data. Auto-detects window.
 const { data } = await supabase.rpc('get_revenue_trend', { p_days: 30 });
 // Returns array:
 // [
-//   { business_date: '2015-12-31', orders: 73, revenue: 2872.75,
+//   { business_date: '2025-12-31', orders: 73, revenue: 2872.75,
 //     avg_order_value: 39.35, guests: 124, tips: 324.13, discounts: 45.78 }
 // ]
 ```
+
+---
+
+## NEW: ElevenLabs Text-to-Speech Module (Module 9)
+
+**Status**: COMPLETE — Module ready to use
+
+A simple Node.js module for text-to-speech using ElevenLabs API. No server required.
+
+### Module Location
+- `Elevenlabs/elevenlabs.js` — Main module
+- `Elevenlabs/example.js` — Usage examples
+- `Elevenlabs/README.md` — Documentation
+
+### API
+
+```javascript
+const elevenlabs = require('./Elevenlabs/elevenlabs');
+
+// Get audio as Buffer
+const audioBuffer = await elevenlabs.textToSpeech("Hello world!");
+
+// Save to file
+await elevenlabs.textToSpeechFile("Hello world!", "speech.mp3");
+
+// Custom voice
+const audio = await elevenlabs.textToSpeech("Hello", {
+    voiceId: "21m00Tcm4TlvDq8ikWAM"  // Rachel (default)
+});
+```
+
+### Configuration
+- API key in `.env`: `ELEVENLABS_API_KEY=sk_your_key_here`
+- Get API key from https://elevenlabs.io
+
+### Test
+```bash
+node Elevenlabs/example.js
+```
+
+### Available Functions
+- `textToSpeech(text, options)` → `Promise<Buffer>`
+- `textToSpeechFile(text, outputPath, options)` → `Promise<void>`
+
+### Exports
+- `DEFAULT_VOICE_ID` — "21m00Tcm4TlvDq8ikWAM" (Rachel)
+- `DEFAULT_MODEL_ID` — "eleven_monolingual_v1"
 
 ---
 
@@ -647,7 +696,28 @@ const supabase = createClient(
 - Supabase JS client handles auth tokens automatically after login
 - The RPC functions use `SECURITY DEFINER` so they bypass RLS internally
 - `sales_line_items` is the single source of truth — everything else derives from it
+- `daily_orders` is synthetically generated from `sales_line_items` by `scripts/generate-daily-orders.js`
 - All credentials go in `.env` (gitignored) — see `.envexample` for template
-- The snapshot RPC auto-detects the data window, so it works with both our historical 2015 data and future real-time data
+- The snapshot RPC auto-detects the data window, so it works with both our historical 2025 data and future real-time data
 - **Two CSV formats**: `ItemSelectionDetails` (item-level, feeds consumption engine) and `OrderDetails` (order-level, feeds analytics)
+- **Data range**: 2025-01-01 to 2026-02-08 (Jan–Dec 2025 from CSV, Jan–Feb 7 2026 copied from 2025)
+- **Forecast scripts now use today's date dynamically** — no more hardcoded reference dates
 - Demo auth: `demo@tonys.pizza` / `TonysPizza2026!`
+
+---
+
+## Full Setup (one command)
+
+```bash
+node scripts/setup-all.js
+```
+
+Runs in order:
+1. `ingest-test-data.js` → sales_line_items + menu_items
+2. `seed-bom.js` → ingredients + BOM recipes
+3. `run-bulk-close.js` → inventory_txns (consumption)
+4. `generate-daily-orders.js` → daily_orders (synthetic from sales)
+5. `reset-inventory.js` → inventory_on_hand (realistic levels)
+6. `generate-forecasts.js` → forecast_items + forecast_ingredients
+7. `ingest-order-details.js` → latest-day order details
+8. `analytics.js` → verification

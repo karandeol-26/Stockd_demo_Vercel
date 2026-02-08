@@ -2,7 +2,7 @@
 
 > **Project**: UGAHacks 11 — Restaurant Inventory Management + Demand Forecasting
 > **Stack**: Supabase (cloud), Vanilla JS + CSS (frontend), PostgreSQL RPCs + Edge Functions (backend)
-> **Last Updated**: 2026-02-07
+> **Last Updated**: 2026-02-08
 
 ---
 
@@ -19,7 +19,9 @@
 9. [Module 5 — Inventory Snapshot Dashboard](#module-5--inventory-snapshot-dashboard)
 10. [Module 6 — Forecasting v1](#module-6--forecasting-v1)
 11. [Module 7 — Admin (Menu + BOM Editor)](#module-7--admin-menu--bom-editor)
-12. [Team Roles](#team-roles)
+12. [Module 8 — Order Analytics](#module-8--order-analytics-new)
+13. [Module 9 — ElevenLabs Text-to-Speech Integration](#module-9--elevenlabs-text-to-speech-integration)
+14. [Team Roles](#team-roles)
 13. [Data Model Reference](#data-model-reference)
 14. [RPC Reference](#rpc-reference)
 15. [Test Data](#test-data)
@@ -143,17 +145,18 @@ EVERYTHING DERIVES FROM sales_line_items:
 | **M5** | Inventory Dashboard | Frontend | DONE | PENDING | get_inventory_snapshot with auto-window detection |
 | **M6** | Forecasting v1 | Data/Backend | DONE | PENDING | generate_forecast + get_forecast, DOW rolling avg |
 | **M7** | Admin (Menu + BOM) | Frontend + Backend | DONE | PENDING | CRUD RPCs with validation, get_bom_for_item |
-| **M8** | Order Analytics | Backend | DONE | PENDING | daily_orders table, get_daily_analytics, get_revenue_trend |
+| **M8** | Order Analytics | Backend | DONE | PENDING | daily_orders table (21,873 synthetic orders), get_daily_analytics, get_revenue_trend |
+| **M9** | ElevenLabs TTS | Integration | DONE | n/a | Simple text-to-speech module using ElevenLabs API |
 
 ### Current Focus
 
 ```
 ALL BACKEND COMPLETE — FRONTEND IS THE BOTTLENECK
 
- M0 -------> M1 -------> M2 -------> M3 -------> M4 -------> M5 -------> M6 -------> M7 -------> M8
-Setup       Schema     Ingestion   Consumption  Inv Ops    Dashboard   Forecast    Admin       Analytics
- DONE        DONE       DONE        DONE        DONE        DONE        DONE       DONE         DONE
-                       ^frontend   ^frontend   ^frontend   ^frontend   ^frontend  ^frontend   ^frontend
+ M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7 -> M8 -> M9
+Setup Schema Ingest Consume InvOps Dash Forecast Admin Analytics TTS
+DONE  DONE   DONE   DONE    DONE   DONE  DONE    DONE   DONE    DONE
+             ^fend  ^fend   ^fend  ^fend ^fend   ^fend  ^fend
 ```
 
 ---
@@ -416,7 +419,8 @@ Provides revenue analytics, service mix, guest counts, peak hours, server perfor
 - [x] `get_daily_analytics(p_business_date)` — revenue summary, service period/dining option/hour/server breakdowns
 - [x] `get_revenue_trend(p_days)` — daily revenue trend for last N days
 - [x] 10 integration tests passing
-- [x] 73 orders loaded from test data (Dec 31, 2015)
+- [x] 21,873 synthetic orders generated from sales_line_items (2025-01-01 to 2026-02-08)
+- [x] `generate-daily-orders.js` script auto-generates daily_orders from sales data
 
 ### Requirements — Frontend (PENDING)
 - [ ] Revenue dashboard cards: total revenue, orders, avg order value, guests
@@ -425,6 +429,116 @@ Provides revenue analytics, service mix, guest counts, peak hours, server perfor
 
 ### Done When
 Manager can see daily revenue breakdown and trends.
+
+---
+
+## Module 9 — ElevenLabs Text-to-Speech Integration
+
+**Owner**: Integration
+**Status**: COMPLETE
+**Dependencies**: `@elevenlabs/elevenlabs-js`, `dotenv`
+
+### Overview
+Simple Node.js module for converting text to speech using the ElevenLabs API. No server infrastructure required - just a lightweight module that can be imported and used anywhere.
+
+### What Was Built
+- **Module**: `Elevenlabs/elevenlabs.js` — Core TTS functionality
+- **Examples**: `Elevenlabs/example.js` — Usage demonstrations
+- **Documentation**: `Elevenlabs/README.md` — Complete API reference and examples
+- **Configuration**: `.env` updated with `ELEVENLABS_API_KEY`
+
+### API Reference
+
+#### `textToSpeech(text, options)`
+Converts text to speech and returns audio as a Buffer.
+
+**Parameters:**
+- `text` (string, required): Text to convert
+- `options` (object, optional):
+  - `voiceId` (string): ElevenLabs voice ID. Default: `21m00Tcm4TlvDq8ikWAM` (Rachel)
+  - `modelId` (string): Model ID. Default: `eleven_monolingual_v1`
+
+**Returns:** `Promise<Buffer>` - Audio data
+
+**Example:**
+```javascript
+const elevenlabs = require('./Elevenlabs/elevenlabs');
+const audioBuffer = await elevenlabs.textToSpeech("Hello world!");
+```
+
+#### `textToSpeechFile(text, outputPath, options)`
+Converts text to speech and saves directly to file.
+
+**Parameters:**
+- `text` (string, required): Text to convert
+- `outputPath` (string, required): Where to save MP3
+- `options` (object, optional): Same as `textToSpeech()`
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```javascript
+await elevenlabs.textToSpeechFile("Hello!", "speech.mp3");
+```
+
+### Configuration
+Set your API key in `.env`:
+```env
+ELEVENLABS_API_KEY=sk_your_actual_key_here
+```
+
+Get your API key from https://elevenlabs.io
+
+### Testing
+```bash
+node Elevenlabs/example.js
+```
+
+**Test Results:**
+- ✅ Generated audio: ~25KB per request
+- ✅ Output format: MP3, 44.1 kHz, 128 kbps
+- ✅ Successfully integrated with project
+
+### Available Voices
+- `21m00Tcm4TlvDq8ikWAM` - Rachel (default)
+- `AZnzlk1XvdvUeBnXmlld` - Domi
+- `EXAVITQu4vr4xnSDxMaL` - Bella
+- `ErXwobaYiN019PkySvjV` - Antoni
+- `MF3mGyEYCl7XYWbV9V6O` - Elli
+- `TxGEqnHWrfWFTfGW9XjX` - Josh
+
+Visit https://elevenlabs.io/voice-library for more.
+
+### Error Handling
+```javascript
+try {
+    const audio = await elevenlabs.textToSpeech("Hello!");
+} catch (error) {
+    console.error('TTS Error:', error.message);
+    // Common errors:
+    // - "Text is required"
+    // - "Failed to generate speech: ..." (API error)
+}
+```
+
+### Module Exports
+```javascript
+{
+    textToSpeech,           // Main function to get audio buffer
+    textToSpeechFile,       // Helper to save directly to file
+    DEFAULT_VOICE_ID,       // "21m00Tcm4TlvDq8ikWAM"
+    DEFAULT_MODEL_ID        // "eleven_monolingual_v1"
+}
+```
+
+### Use Cases
+- Generate audio announcements for kiosk
+- Text-to-speech for accessibility features
+- Audio feedback for order confirmations
+- Voice prompts for inventory alerts
+
+### Done When
+✅ Module tested and working - ready to use in any part of the application.
 
 ---
 
@@ -447,13 +561,13 @@ Manager can see daily revenue breakdown and trends.
 | `menu_items` | `id` (uuid) | name, category, active | 91 | Auto-created by ingest RPC |
 | `ingredients` | `id` (uuid) | name, unit, reorder_point, lead_time_days, unit_cost | 32 | |
 | `bom` | `(menu_item_id, ingredient_id)` | qty_per_item | 674 | Size-scaled recipes |
-| **`sales_line_items`** | **`id` (uuid)** | **business_date, menu_item_id, qty, net_sales** | **22,964** | **SINGLE SOURCE OF TRUTH** |
+| **`sales_line_items`** | **`id` (uuid)** | **business_date, menu_item_id, qty, net_sales** | **25,396** | **SINGLE SOURCE OF TRUTH** (2025-01-01 to 2026-02-08) |
 | `inventory_on_hand` | `ingredient_id` | qty_on_hand, updated_at | 32 | |
-| `inventory_txns` | `id` (uuid) | ingredient_id, txn_type, qty_delta, business_date | 11,280 | Audit trail |
+| `inventory_txns` | `id` (uuid) | ingredient_id, txn_type, qty_delta, business_date | ~24,000 | Audit trail |
 | `app_config` | `key` (text) | value (jsonb), updated_at | 1 | Onboarding state |
-| `forecast_items` | `id` (uuid) | forecast_date, menu_item_id, qty | 620 | Item-level forecasts |
-| `forecast_ingredients` | `id` (uuid) | forecast_date, ingredient_id, qty | 224 | Ingredient-level forecasts |
-| `daily_orders` | `id` (uuid) | business_date, order_id, subtotal, tip, total, ... | 73 | Order-level analytics |
+| `forecast_items` | `id` (uuid) | forecast_date, menu_item_id, qty | 2,525 | Item-level forecasts |
+| `forecast_ingredients` | `id` (uuid) | forecast_date, ingredient_id, qty | 926 | Ingredient-level forecasts |
+| `daily_orders` | `id` (uuid) | business_date, order_id, subtotal, tip, total, ... | 21,873 | Synthetic from sales_line_items |
 
 ### Enums
 
@@ -489,14 +603,35 @@ Manager can see daily revenue breakdown and trends.
 | `get_daily_analytics(p_business_date)` | date (optional) | `{ status, revenue, orders, by_server, ... }` | M8 | LIVE |
 | `get_revenue_trend(p_days)` | int | jsonb array of daily revenue data | M8 | LIVE |
 
+### JavaScript Module Functions (Module 9)
+
+| Function | Input | Returns | Module | Status |
+|----------|-------|---------|--------|--------|
+| `textToSpeech(text, options)` | string, object | `Promise<Buffer>` (MP3 audio) | M9 | READY |
+| `textToSpeechFile(text, path, options)` | string, string, object | `Promise<void>` (saves MP3) | M9 | READY |
+
 ---
 
 ## Test Data
 
 | File | Description | Rows | Date Range |
 |------|-------------|------|------------|
-| `Test data/Toast_ItemSelectionDetails_from_Pizza.csv` | Item-level sales (Tony's Pizza Atlanta) | ~48K | 01/01/2015 - 12/31/2015 |
-| `Test data/Toast_OrderDetails_DAILY_INJECT_latestDay.csv` | Order-level summary (last day) | 74 | 12/31/2015 |
+| `Test data/Toast_ItemSelectionDetails_from_Pizza.csv` | Item-level sales (Tony's Pizza Atlanta) | ~48K | 01/01/2025 - 12/31/2025 |
+| `Test data/Toast_OrderDetails_DAILY_INJECT_latestDay.csv` | Order-level summary (last day) | 74 | 12/31/2025 |
+
+### Setup Scripts
+
+| Script | Purpose | Run Order |
+|--------|---------|----------|
+| `scripts/setup-all.js` | **Master setup — runs everything below in order** | -- |
+| `scripts/ingest-test-data.js` | Ingest sales CSV → sales_line_items + menu_items | 1 |
+| `scripts/seed-bom.js` | Seed ingredients + BOM recipes | 2 |
+| `scripts/run-bulk-close.js` | Process all dates → inventory_txns (consumption) | 3 |
+| `scripts/generate-daily-orders.js` | Generate synthetic daily_orders from sales data | 4 |
+| `scripts/reset-inventory.js` | Set realistic inventory levels | 5 |
+| `scripts/generate-forecasts.js` | Generate 7-day forecasts (uses today's date) | 6 |
+| `scripts/ingest-order-details.js` | Ingest latest-day order details CSV | 7 |
+| `scripts/analytics.js` | Verify all tables — print analytics | 8 |
 
 ---
 
@@ -530,3 +665,16 @@ Manager can see daily revenue breakdown and trends.
 | `tests/m7-admin-crud.test.js` | 20 | M7 (CRUD RPCs) |
 | `tests/orders-analytics.test.js` | 10 | M8 (orders, analytics) |
 | **Total** | **66** | **All passing** |
+
+## Package Dependencies
+
+| Package | Purpose | Module |
+|---------|---------|--------|
+| `@supabase/supabase-js` | Database client | All modules |
+| `@elevenlabs/elevenlabs-js` | Text-to-speech API client | M9 |
+| `dotenv` | Environment variable management | All modules |
+| `papaparse` | CSV parsing | M2 (frontend) |
+| `pdfjs-dist` | PDF parsing (US Foods invoices) | M4 |
+| `express` | API server (optional) | -- |
+| `cors` | CORS middleware (optional) | -- |
+| `jest` | Testing framework | All tests |
