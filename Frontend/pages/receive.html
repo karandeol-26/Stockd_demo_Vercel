@@ -34,10 +34,58 @@
       Receive Inventory
     </h1>
     <p style="color:var(--text-muted);font-size:13px;margin-bottom:28px;" class="animate-in stagger-1">
-      Record a delivery to increase on-hand stock for an ingredient.
+      Upload a US Foods invoice to automatically update stock, or manually record a delivery below.
     </p>
 
+    <!-- INVOICE UPLOAD SECTION -->
+    <div class="card animate-in stagger-2" style="margin-bottom: 24px; border: 1px dashed var(--border-color);">
+      <div class="section-header" style="margin-top:0;">
+        <h2>📄 Upload Invoice (US Foods)</h2>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select PDF Invoice</label>
+        <input type="file" id="invoice-upload" accept=".pdf" class="form-input">
+      </div>
+
+      <button class="btn btn-secondary btn-block" id="analyze-btn" onclick="analyzeInvoice()">
+        Analyze Invoice
+      </button>
+
+      <!-- Results Container -->
+      <div id="invoice-results" style="display:none; margin-top:20px;">
+        <h3 style="font-size:14px; margin-bottom:10px; color:var(--text-primary);">Matched Items</h3>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="matches-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="select-all" checked onchange="toggleAllMatches(this)"></th>
+                <th>Ingredient</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="matches-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="unmatched-count" style="margin-top:10px; font-size:12px; color:var(--text-muted);"></div>
+
+        <button class="btn btn-primary btn-block" id="confirm-invoice-btn" onclick="confirmInvoiceReceive()"
+          style="margin-top:16px;">
+          Confirm & Receive Selected
+        </button>
+      </div>
+
+      <div id="invoice-status" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- MANUAL ENTRY SECTION -->
     <div class="card animate-in stagger-2">
+      <div class="section-header" style="margin-top:0;">
+        <h2>Manual Entry</h2>
+      </div>
       <div class="form-group">
         <label class="form-label">Ingredient</label>
         <select class="form-select" id="ingredient-select">
@@ -87,8 +135,123 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/env.js"></script>
   <script src="../js/supabase-client.js"></script>
+
+  <!-- Import Module Script -->
+  <script type="module">
+    import { getInvoiceMatches } from '../js/invoice-matcher.js';
+
+    window.analyzeInvoice = async function () {
+      const fileInput = document.getElementById('invoice-upload');
+      const file = fileInput.files[0];
+      const statusEl = document.getElementById('invoice-status');
+
+      if (!file) {
+        statusEl.innerHTML = '<span style="color:var(--red)">Please select a PDF file first</span>';
+        return;
+      }
+
+      try {
+        statusEl.innerHTML = '<span style="color:var(--blue)">Analyzing PDF... this may take a moment</span>';
+        document.getElementById('analyze-btn').disabled = true;
+
+        const { matches, unmatched } = await getInvoiceMatches(file, sb);
+
+        renderMatches(matches, unmatched);
+        statusEl.innerHTML = '';
+      } catch (err) {
+        console.error(err);
+        statusEl.innerHTML = `<span style="color:var(--red)">Error: ${err.message}</span>`;
+      } finally {
+        document.getElementById('analyze-btn').disabled = false;
+      }
+    };
+
+    let currentMatches = [];
+
+    function renderMatches(matches, unmatched) {
+      currentMatches = matches;
+      const container = document.getElementById('invoice-results');
+      const tbody = document.getElementById('matches-tbody');
+      const unmatchedEl = document.getElementById('unmatched-count');
+
+      container.style.display = 'block';
+
+      if (matches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No ingredients matched from this invoice.</td></tr>';
+        document.getElementById('confirm-invoice-btn').disabled = true;
+        return;
+      }
+
+      document.getElementById('confirm-invoice-btn').disabled = false;
+
+      tbody.innerHTML = matches.map((m, idx) => `
+        <tr>
+          <td><input type="checkbox" class="match-checkbox" data-idx="${idx}" checked></td>
+          <td style="font-weight:500;">${m.ingredientName}</td>
+          <td class="mono" style="color:var(--green)">+${m.qtyShipped}</td>
+          <td class="mono" style="font-size:12px;">${m.ingredientUnit}</td>
+          <td style="font-size:11px; color:var(--text-muted)">
+            Ordered: ${m.qtyOrdered}<br>Product #: ${m.productNumber}
+          </td>
+        </tr>
+      `).join('');
+
+      unmatchedEl.textContent = `${unmatched.length} unmatched line items hidden.`;
+    }
+
+    window.toggleAllMatches = function (source) {
+      const checkboxes = document.querySelectorAll('.match-checkbox');
+      checkboxes.forEach(cb => cb.checked = source.checked);
+    };
+
+    window.confirmInvoiceReceive = async function () {
+      const checkboxes = document.querySelectorAll('.match-checkbox:checked');
+      if (checkboxes.length === 0) return;
+
+      const btn = document.getElementById('confirm-invoice-btn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const cb of checkboxes) {
+        const idx = parseInt(cb.getAttribute('data-idx'));
+        const item = currentMatches[idx];
+
+        try {
+          const { error } = await sb.rpc('receive_inventory', {
+            p_ingredient_id: item.ingredientId,
+            p_qty: item.qtyShipped,
+            p_note: `Invoice Upload: ${item.productNumber}`
+          });
+
+          if (error) throw error;
+          successCount++;
+        } catch (e) {
+          console.error('Failed to receive item:', item, e);
+          failCount++;
+        }
+      }
+
+      alert(`Processed invoice.\nSuccess: ${successCount}\nFailed: ${failCount}`);
+
+      // Reset
+      btn.textContent = 'Confirm & Receive Selected';
+      btn.disabled = false;
+      document.getElementById('invoice-results').style.display = 'none';
+      document.getElementById('invoice-upload').value = '';
+
+      // Refresh recents
+      loadRecentReceipts();
+    };
+  </script>
+
+  <script src="../js/supabase-client.js"></script> <!-- Already included above, but keep order -->
   <script>
+    // Existing manual scripts below...
     function go(page) { window.location.href = page + '.html'; }
+
 
     let ingredients = [];
 
