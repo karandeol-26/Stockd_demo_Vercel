@@ -6,7 +6,7 @@
   <title>Tony's Pizza — Order Kiosk</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="kiosk.css">
+  <link rel="stylesheet" href="kiosk.css?v=2">
 </head>
 <body>
 
@@ -19,9 +19,12 @@
         <div class="header-sub">Self-Order Kiosk</div>
       </div>
     </div>
-    <div class="header-badges">
-      <span class="badge" id="badge-items">0 items</span>
-      <span class="badge badge-accent" id="badge-total">$0.00</span>
+    <div class="header-right">
+      <div class="header-clock" id="header-clock"></div>
+      <div class="header-badges">
+        <span class="badge" id="badge-items">0 items</span>
+        <span class="badge badge-accent" id="badge-total">$0.00</span>
+      </div>
     </div>
   </header>
 
@@ -31,42 +34,71 @@
     <!-- Left: Menu Side -->
     <section class="menu-side">
 
-      <!-- Item Selector -->
-      <div class="selector-panel">
-        <h2 class="selector-title">Add Items</h2>
-
-        <div class="selector-row">
-          <label class="selector-label" for="cat-select">Category</label>
-          <select class="selector-dropdown" id="cat-select">
-            <option value="all">All Categories</option>
-          </select>
-        </div>
-
-        <div class="selector-row">
-          <label class="selector-label" for="item-select">Menu Item</label>
-          <select class="selector-dropdown" id="item-select">
-            <option value="">— pick a menu item —</option>
-          </select>
-        </div>
-
-        <div class="selector-row selector-actions">
-          <input type="number" class="qty-input" id="add-qty" min="1" value="1">
-          <button class="btn-add" id="btn-add" disabled>Add to Order</button>
+      <!-- Welcome -->
+      <div class="welcome-banner">
+        <div class="welcome-icon">👋</div>
+        <div>
+          <div class="welcome-title">Welcome! Build your order</div>
+          <div class="welcome-sub">Pick a category, choose an item, and add it to your cart.</div>
         </div>
       </div>
+
+      <!-- Item Selector -->
+      <div class="selector-panel">
+        <div class="selector-step">
+          <div class="step-badge">1</div>
+          <div class="selector-row">
+            <label class="selector-label" for="cat-select">Category</label>
+            <select class="selector-dropdown" id="cat-select">
+              <option value="all">All Categories</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="selector-step">
+          <div class="step-badge">2</div>
+          <div class="selector-row">
+            <label class="selector-label" for="item-select">Menu Item</label>
+            <select class="selector-dropdown" id="item-select">
+              <option value="">— pick a menu item —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="selector-step">
+          <div class="step-badge">3</div>
+          <div class="selector-row selector-actions">
+            <label class="selector-label">Quantity &amp; Add</label>
+            <div class="action-controls">
+              <div class="qty-stepper">
+                <button class="qty-step-btn" id="qty-minus" type="button">−</button>
+                <input type="number" class="qty-input" id="add-qty" min="1" value="1" readonly>
+                <button class="qty-step-btn" id="qty-plus" type="button">+</button>
+              </div>
+              <button class="btn-add" id="btn-add" disabled>
+                <span class="btn-add-icon">+</span> Add to Order
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item count -->
+      <div class="menu-stats" id="menu-stats"></div>
     </section>
 
     <!-- Right: Cart Side -->
     <aside class="cart-side">
       <div class="cart-head">
-        <h2>Your Order</h2>
-        <button class="link-btn" id="btn-clear">Clear</button>
+        <h2>🛒 Your Order</h2>
+        <button class="link-btn" id="btn-clear">Clear All</button>
       </div>
 
       <div class="cart-body" id="cart-body">
         <div class="cart-empty" id="cart-empty">
-          <div style="font-size:48px;margin-bottom:12px;">🛒</div>
-          <p>Tap items on the left to start your order</p>
+          <div class="cart-empty-icon">📋</div>
+          <p class="cart-empty-title">No items yet</p>
+          <p class="cart-empty-sub">Use the menu on the left to add items</p>
         </div>
       </div>
 
@@ -87,7 +119,9 @@
           </div>
         </div>
 
-        <button class="btn-order" id="btn-order" disabled>Place Order</button>
+        <button class="btn-order" id="btn-order" disabled>
+          Place Order
+        </button>
       </div>
     </aside>
   </main>
