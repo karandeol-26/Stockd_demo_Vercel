@@ -9,10 +9,12 @@ const supabase = createClient(
 async function main() {
   console.log('Generating forecasts...');
   
-  // Generate forecast for next 7 days
+  // Generate forecast for next 7 days from today
+  const today = new Date().toISOString().split('T')[0];
+  console.log(`  Reference date: ${today}`);
   const { data, error } = await supabase.rpc('generate_forecast', {
     p_days_ahead: 7,
-    p_reference_date: '2026-02-08'
+    p_reference_date: today
   });
 
   if (error) {

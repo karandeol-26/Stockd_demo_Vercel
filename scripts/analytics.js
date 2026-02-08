@@ -35,7 +35,8 @@ async function main() {
   console.log('  Total sales rows: ' + totalSales);
 
   // Top 5 selling items by forecast demand
-  await s.rpc('generate_forecast', { p_days_ahead: 1, p_reference_date: '2026-02-08' });
+  const today = new Date().toISOString().split('T')[0];
+  await s.rpc('generate_forecast', { p_days_ahead: 1, p_reference_date: today });
   const { data: top5 } = await s.from('forecast_items')
     .select('menu_item_id, qty')
     .order('qty', { ascending: false })

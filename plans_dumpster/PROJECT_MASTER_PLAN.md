@@ -2,7 +2,7 @@
 
 > **Project**: UGAHacks 11 — Restaurant Inventory Management + Demand Forecasting
 > **Stack**: Supabase (cloud), Vanilla JS + CSS (frontend), PostgreSQL RPCs + Edge Functions (backend)
-> **Last Updated**: 2026-02-07
+> **Last Updated**: 2026-02-08
 
 ---
 
@@ -145,7 +145,7 @@ EVERYTHING DERIVES FROM sales_line_items:
 | **M5** | Inventory Dashboard | Frontend | DONE | PENDING | get_inventory_snapshot with auto-window detection |
 | **M6** | Forecasting v1 | Data/Backend | DONE | PENDING | generate_forecast + get_forecast, DOW rolling avg |
 | **M7** | Admin (Menu + BOM) | Frontend + Backend | DONE | PENDING | CRUD RPCs with validation, get_bom_for_item |
-| **M8** | Order Analytics | Backend | DONE | PENDING | daily_orders table, get_daily_analytics, get_revenue_trend |
+| **M8** | Order Analytics | Backend | DONE | PENDING | daily_orders table (21,873 synthetic orders), get_daily_analytics, get_revenue_trend |
 | **M9** | ElevenLabs TTS | Integration | DONE | n/a | Simple text-to-speech module using ElevenLabs API |
 
 ### Current Focus
@@ -419,7 +419,8 @@ Provides revenue analytics, service mix, guest counts, peak hours, server perfor
 - [x] `get_daily_analytics(p_business_date)` — revenue summary, service period/dining option/hour/server breakdowns
 - [x] `get_revenue_trend(p_days)` — daily revenue trend for last N days
 - [x] 10 integration tests passing
-- [x] 73 orders loaded from test data (Dec 31, 2015)
+- [x] 21,873 synthetic orders generated from sales_line_items (2025-01-01 to 2026-02-08)
+- [x] `generate-daily-orders.js` script auto-generates daily_orders from sales data
 
 ### Requirements — Frontend (PENDING)
 - [ ] Revenue dashboard cards: total revenue, orders, avg order value, guests
@@ -560,13 +561,13 @@ try {
 | `menu_items` | `id` (uuid) | name, category, active | 91 | Auto-created by ingest RPC |
 | `ingredients` | `id` (uuid) | name, unit, reorder_point, lead_time_days, unit_cost | 32 | |
 | `bom` | `(menu_item_id, ingredient_id)` | qty_per_item | 674 | Size-scaled recipes |
-| **`sales_line_items`** | **`id` (uuid)** | **business_date, menu_item_id, qty, net_sales** | **22,964** | **SINGLE SOURCE OF TRUTH** |
+| **`sales_line_items`** | **`id` (uuid)** | **business_date, menu_item_id, qty, net_sales** | **25,396** | **SINGLE SOURCE OF TRUTH** (2025-01-01 to 2026-02-08) |
 | `inventory_on_hand` | `ingredient_id` | qty_on_hand, updated_at | 32 | |
-| `inventory_txns` | `id` (uuid) | ingredient_id, txn_type, qty_delta, business_date | 11,280 | Audit trail |
+| `inventory_txns` | `id` (uuid) | ingredient_id, txn_type, qty_delta, business_date | ~24,000 | Audit trail |
 | `app_config` | `key` (text) | value (jsonb), updated_at | 1 | Onboarding state |
-| `forecast_items` | `id` (uuid) | forecast_date, menu_item_id, qty | 620 | Item-level forecasts |
-| `forecast_ingredients` | `id` (uuid) | forecast_date, ingredient_id, qty | 224 | Ingredient-level forecasts |
-| `daily_orders` | `id` (uuid) | business_date, order_id, subtotal, tip, total, ... | 73 | Order-level analytics |
+| `forecast_items` | `id` (uuid) | forecast_date, menu_item_id, qty | 2,525 | Item-level forecasts |
+| `forecast_ingredients` | `id` (uuid) | forecast_date, ingredient_id, qty | 926 | Ingredient-level forecasts |
+| `daily_orders` | `id` (uuid) | business_date, order_id, subtotal, tip, total, ... | 21,873 | Synthetic from sales_line_items |
 
 ### Enums
 
@@ -615,8 +616,22 @@ try {
 
 | File | Description | Rows | Date Range |
 |------|-------------|------|------------|
-| `Test data/Toast_ItemSelectionDetails_from_Pizza.csv` | Item-level sales (Tony's Pizza Atlanta) | ~48K | 01/01/2015 - 12/31/2015 |
-| `Test data/Toast_OrderDetails_DAILY_INJECT_latestDay.csv` | Order-level summary (last day) | 74 | 12/31/2015 |
+| `Test data/Toast_ItemSelectionDetails_from_Pizza.csv` | Item-level sales (Tony's Pizza Atlanta) | ~48K | 01/01/2025 - 12/31/2025 |
+| `Test data/Toast_OrderDetails_DAILY_INJECT_latestDay.csv` | Order-level summary (last day) | 74 | 12/31/2025 |
+
+### Setup Scripts
+
+| Script | Purpose | Run Order |
+|--------|---------|----------|
+| `scripts/setup-all.js` | **Master setup — runs everything below in order** | -- |
+| `scripts/ingest-test-data.js` | Ingest sales CSV → sales_line_items + menu_items | 1 |
+| `scripts/seed-bom.js` | Seed ingredients + BOM recipes | 2 |
+| `scripts/run-bulk-close.js` | Process all dates → inventory_txns (consumption) | 3 |
+| `scripts/generate-daily-orders.js` | Generate synthetic daily_orders from sales data | 4 |
+| `scripts/reset-inventory.js` | Set realistic inventory levels | 5 |
+| `scripts/generate-forecasts.js` | Generate 7-day forecasts (uses today's date) | 6 |
+| `scripts/ingest-order-details.js` | Ingest latest-day order details CSV | 7 |
+| `scripts/analytics.js` | Verify all tables — print analytics | 8 |
 
 ---
 
