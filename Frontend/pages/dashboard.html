@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RestaurantIQ — Dashboard</title>
+  <title>Stockd — Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/logo-s.svg">
   <link rel="stylesheet" href="../css/app-light.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
@@ -23,25 +24,25 @@
   <!-- Top Nav -->
   <nav class="topnav">
     <div class="topnav-brand">
-      <div class="topnav-icon">R</div>
+      <div class="topnav-icon"></div>
       <div>
-        <div class="topnav-title">RestaurantIQ</div>
+        <div class="topnav-title">Stockd</div>
       </div>
     </div>
     <div class="topnav-links">
       <button class="topnav-link active" onclick="go('dashboard')">Dashboard</button>
-      <button class="topnav-link" onclick="go('upload')">Upload</button>
+      <button class="topnav-link" onclick="go('sales-analysis')">Sales Analysis</button>
       <button class="topnav-link" onclick="go('receive')">Receive</button>
       <button class="topnav-link" onclick="go('count')">Count</button>
     </div>
     <div class="topnav-actions">
-      <button class="btn btn-primary" onclick="go('upload')">↑ Upload Report</button>
+      <button class="btn btn-primary" onclick="toggleAIPanel()">✨ Copilot</button>
       <button class="btn btn-outline" onclick="signOut()" title="Sign out">⏻</button>
     </div>
   </nav>
 
   <!-- Main Content -->
-  <div class="page-container" id="main-content" style="opacity:0;transition:opacity 0.5s;">
+  <div class="page-container" id="main-content" style="opacity:0;transition:opacity 0.5s; padding-bottom:20px;">
 
     <!-- Alert Banner (filled by JS) -->
     <div id="alert-banner"></div>
@@ -78,7 +79,7 @@
     <div class="grid-2 mt-24">
       <div class="card">
         <div class="section-header" style="margin-top:0; margin-bottom: 20px;">
-          <h2>Revenue Trend</h2>
+          <h2 class="chart-header-title">Revenue Trend (4 Weeks)</h2>
         </div>
         <div style="height: 240px; position: relative;">
           <canvas id="revenue-chart"></canvas>
@@ -86,7 +87,7 @@
       </div>
       <div class="card">
         <div class="section-header" style="margin-top:0; margin-bottom: 20px;">
-          <h2>Sales by Category</h2>
+          <h2 class="chart-header-title">Sales by Category</h2>
         </div>
         <div style="height: 240px; position: relative; display:flex; justify-content:center;">
           <canvas id="category-chart"></canvas>
@@ -98,7 +99,20 @@
     <div class="card forecast-card" style="padding:0;overflow:hidden; margin-top:24px;">
       <div
         style="padding: 16px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2C2C2E;">
-        <h2 style="margin:0; font-size:18px;">Forecast & Inventory</h2>
+        <div style="display:flex; align-items:center; gap:20px;">
+          <h2 style="margin:0; font-size:18px;">Forecast & Inventory</h2>
+          <!-- Custom Legend (Hidden by default, shown when Chart tab active) -->
+          <div id="chart-legend" style="display:none; align-items:center; gap:16px; font-size:13px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="width:12px; height:12px; border-radius:3px; background:#0A84FF;"></div>
+              <span style="color:#AEAEB2;">Actual Revenue</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="width:12px; height:12px; border-radius:3px; background:#30D158;"></div>
+              <span style="color:#AEAEB2;">Forecast</span>
+            </div>
+          </div>
+        </div>
         <div class="segmented-control">
           <button class="segment-btn active" onclick="switchTab('ingredients', this)">Ingredients</button>
           <button class="segment-btn" onclick="switchTab('menu', this)">Menu Items</button>
@@ -155,29 +169,55 @@
       </div>
     </div>
 
-    <!-- Bottom Row: Top Sellers + Alerts Detail -->
-    <div class="grid-2 mt-24">
-      <!-- Top Sellers -->
+    <!-- Bottom Row: Suggested Restocks (Full Width) -->
+    <div class="mt-24">
       <div class="card">
-        <div class="section-header" style="margin-top:0;">
-          <h2>Top Selling Items</h2>
+        <div class="section-header"
+          style="margin:0; padding:20px 0 16px; text-align:center; border-bottom:2px solid #FFFFFF;">
+          <h2 style="font-size:30px; font-weight:700; margin:0; color:#FFFFFF; letter-spacing:-0.3px;">Alerts & Actions
+          </h2>
         </div>
-        <div id="top-sellers"></div>
-      </div>
-      <!-- Alerts -->
-      <div class="card">
-        <div class="section-header" style="margin-top:0;">
-          <h2>Alerts & Actions</h2>
-        </div>
-        <div id="alerts-detail"></div>
-        <div style="display:flex;gap:10px;margin-top:14px;">
-          <button class="btn btn-secondary" style="flex:1;" onclick="go('receive')">Receive Delivery</button>
-          <button class="btn btn-outline" style="flex:1;" onclick="go('count')">Physical Count</button>
+
+        <!-- Two Column Layout -->
+        <div style="display:flex; gap:16px; padding:20px; height:400px;">
+          <!-- Left: Alert List -->
+          <div id="suggested-orders" style="flex:1; overflow-y: auto;"></div>
+
+          <!-- Right: Visual Dashboard -->
+          <div style="width:300px; display:flex; flex-direction:column; justify-content:center; gap:20px;">
+            <div style="text-align:center;">
+              <div
+                style="color:#8E8E93; font-size:15px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px;">
+                Inventory Health</div>
+              <canvas id="inventory-health-chart" style="max-width:260px; max-height:260px; margin:0 auto;"></canvas>
+            </div>
+            <div id="health-stats" style="display:flex; flex-direction:column; gap:8px; font-size:13px;"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="page-footer">RestaurantIQ v0.1 · UGAHacks 11 · Data from Supabase</div>
+    <div class="page-footer"
+      style="margin-top:40px; padding:20px 0 10px 0; border-top:1px solid #D1D1D6; text-align:center;">
+      <div style="font-size:24px; font-weight:600; margin-bottom:12px; color:#1D1D1F; letter-spacing:-0.5px;">
+        Stockd</div>
+      <div
+        style="color:#86868B; font-size:12px; margin:0 auto; line-height:1.4; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        Smart inventory management for modern kitchens. Powered using Gemini & Supabase.
+      </div>
+      <div
+        style="color:#86868B; font-size:12px; margin-top:4px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        Designed in Athens, GA.
+      </div>
+      <div style="margin-top:16px; display:flex; justify-content:center; gap:24px; font-size:12px;">
+        <a href="#" style="color:#6E6E73; text-decoration:none;">Privacy Policy</a>
+        <a href="#" style="color:#6E6E73; text-decoration:none;">Terms of Use</a>
+        <a href="#" style="color:#6E6E73; text-decoration:none;">Global Support</a>
+      </div>
+      <div style="margin-top:16px; color:#86868B; font-size:11px;">
+        Copyright © 2026 Stockd Inc. All rights reserved.
+      </div>
+    </div>
   </div>
 
   <!-- Loading Overlay -->
@@ -195,6 +235,7 @@
   <script src="../js/gemini-client.js"></script>
   <script src="../js/config.js"></script>
   <script src="../js/ai-copilot.js"></script>
+  <script src="../js/animated-counter.js"></script>
   <script>
     // ─── Navigation ──────────────────────────
     function go(page) { window.location.href = page + '.html'; }
@@ -229,8 +270,7 @@
         renderForecastTable(forecastData?.menu_items || []);
         renderForecastChart(salesTrend, forecastData?.daily_revenue || []);
         renderCategoryChart(categories);
-        renderTopSellers(topSellers);
-        renderAlerts(inventory);
+        renderSuggestedOrders(inventory);
 
       } catch (err) {
         console.error('Dashboard error:', err);
@@ -401,18 +441,40 @@
       const totalRev = sales.reduce((s, d) => s + d.revenue, 0);
       const numDays = sales.length || 1;
       const avgDaily = totalRev / numDays;
+      const itemsPerDay = Math.round(sales.reduce((s, d) => s + d.orders, 0) / numDays);
 
       const critical = (inventory || []).filter(i => i.status === 'critical').length;
       const reorder = (inventory || []).filter(i => i.status === 'reorder_soon').length;
       const alerts = critical + reorder;
 
-      document.getElementById('kpi-revenue').textContent = '$' + Math.round(totalRev).toLocaleString();
-      document.getElementById('kpi-revenue-sub').textContent = `${numDays} business days`;
-      document.getElementById('kpi-daily').textContent = '$' + Math.round(avgDaily).toLocaleString();
-      document.getElementById('kpi-daily-sub').textContent = `${Math.round(sales.reduce((s, d) => s + d.orders, 0) / numDays)} items/day avg`;
-      document.getElementById('kpi-alerts').textContent = alerts;
-      document.getElementById('kpi-alerts-sub').textContent = `${critical} critical, ${reorder} low`;
-      document.getElementById('kpi-items').textContent = menuCount;
+      // Animate KPI values
+      AnimatedCounter.animateCurrency(document.getElementById('kpi-revenue'), Math.round(totalRev), { decimals: 0 });
+      AnimatedCounter.animateCurrency(document.getElementById('kpi-daily'), Math.round(avgDaily), { decimals: 0 });
+      AnimatedCounter.animate(document.getElementById('kpi-alerts'), alerts);
+      AnimatedCounter.animate(document.getElementById('kpi-items'), menuCount);
+
+      // Animate sub-values
+      const revSub = document.getElementById('kpi-revenue-sub');
+      const dailySub = document.getElementById('kpi-daily-sub');
+      const alertsSub = document.getElementById('kpi-alerts-sub');
+
+      // Stagger the sub-value appearance
+      setTimeout(() => {
+        revSub.innerHTML = `<span class="animated-sub-value"></span> business days`;
+        AnimatedCounter.animate(revSub.querySelector('.animated-sub-value'), numDays);
+      }, 300);
+
+      setTimeout(() => {
+        dailySub.innerHTML = `<span class="animated-sub-value"></span> items/day avg`;
+        AnimatedCounter.animate(dailySub.querySelector('.animated-sub-value'), itemsPerDay);
+      }, 400);
+
+      setTimeout(() => {
+        alertsSub.innerHTML = `<span class="animated-sub-value"></span> critical, <span class="animated-sub-value-2"></span> low`;
+        AnimatedCounter.animate(alertsSub.querySelector('.animated-sub-value'), critical);
+        AnimatedCounter.animate(alertsSub.querySelector('.animated-sub-value-2'), reorder);
+      }, 500);
+
       document.getElementById('kpi-items-sub').textContent = `Across ${new Set((inventory || []).map(i => i.unit)).size || '—'} ingredient units`;
 
       // Alert banner
@@ -494,6 +556,14 @@
       if (btn) btn.classList.add('active');
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.getElementById('tab-' + tabId).classList.add('active');
+
+      // Show legend only for chart tab
+      const legend = document.getElementById('chart-legend');
+      if (tabId === 'chart') {
+        legend.style.display = 'flex';
+      } else {
+        legend.style.display = 'none';
+      }
     }
 
     function renderForecastTable(items) {
@@ -687,32 +757,153 @@
       });
     }
 
-    function renderTopSellers(items) {
-      const el = document.getElementById('top-sellers');
-      if (!items.length) {
-        el.innerHTML = '<div class="empty-state"><p>No sales data yet</p></div>';
+    function renderSuggestedOrders(inventory) {
+      const el = document.getElementById('suggested-orders');
+      const suggested = (inventory || [])
+        .filter(i => (i.reorder_point || 0) > i.qty_on_hand)
+        .sort((a, b) => (a.days_of_supply || 999) - (b.days_of_supply || 999));
+
+      if (!suggested.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:40px; text-align:center; color:#8E8E93;"><div style="font-size:48px; margin-bottom:16px;">✅</div><h3 style="color:#FFF; font-weight:500;">All Systems Go</h3><p>Your inventory is healthy. No actions needed today.</p></div>';
         return;
       }
 
-      const numDays = 365;
-      el.innerHTML = items.slice(0, 8).map((item, i) => `
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;
-                     ${i < items.length - 1 ? 'border-bottom:1px solid var(--border-light);' : ''}">
-          <div style="width:32px;height:32px;border-radius:10px;
-                       background:rgba(48, 209, 88, ${0.15 - i * 0.02});
-                       display:flex;align-items:center;justify-content:center;
-                       color:var(--accent);font-size:13px;font-weight:700;
-                       font-family:var(--font-mono);">${i + 1}</div>
-          <div style="flex:1;">
-            <div style="color:var(--text-primary);font-size:14px;font-weight:500;">${item.name}</div>
-            <div style="color:var(--text-secondary);font-size:12px;">${item.category} · $${Math.round(item.totalSales).toLocaleString()}</div>
-          </div>
-          <div style="font-family:var(--font-mono);color:var(--accent);font-size:14px;font-weight:600;">
-            ${Math.round(item.totalQty / numDays)}/day
+      // Group by urgency
+      const critical = suggested.filter(i => i.days_of_supply <= 2);
+      const warnings = suggested.filter(i => i.days_of_supply > 2);
+
+      let html = '<ul style="list-style:none; padding:0; margin:0;">';
+
+      if (critical.length > 0) {
+        html += critical.map(item => {
+          const need = (item.reorder_point || 0) - item.qty_on_hand;
+          return `
+              <li style="margin-bottom:16px; display:flex; gap:16px; align-items:start;">
+                  <div style="color:#FF453A; font-size:20px; line-height:1.4;">•</div>
+                  <div>
+                      <div style="color:#FFF; font-size:16px; font-weight:500; line-height:1.4;">
+                          ${item.name} is critically low.
+                      </div>
+                      <div style="color:#AEAEB2; font-size:15px; margin-top:2px;">
+                          Order <span style="color:#FFF; font-weight:600;">${Math.ceil(need)} ${item.unit}</span> to restore safe levels.
+                      </div>
+                  </div>
+              </li>`;
+        }).join('');
+      }
+
+      if (warnings.length > 0) {
+        html += warnings.map(item => {
+          const need = (item.reorder_point || 0) - item.qty_on_hand;
+          return `
+              <li style="margin-bottom:16px; display:flex; gap:16px; align-items:start;">
+                  <div style="color:#FF9F0A; font-size:20px; line-height:1.4;">•</div>
+                  <div>
+                      <div style="color:#FFF; font-size:16px; font-weight:500; line-height:1.4;">
+                          Restock ${item.name}.
+                      </div>
+                      <div style="color:#AEAEB2; font-size:15px; margin-top:2px;">
+                          Purchase <span style="color:#FFF; font-weight:600;">${Math.ceil(need)} ${item.unit}</span> soon to avoid running out.
+                      </div>
+                  </div>
+              </li>`;
+        }).join('');
+      }
+
+      html += '</ul>';
+      el.innerHTML = html;
+
+      // Also render the health chart
+      renderInventoryHealthChart(inventory);
+    }
+
+    let inventoryHealthChartInstance = null;
+
+    function renderInventoryHealthChart(inventory) {
+      if (!inventory || inventory.length === 0) return;
+
+      // Calculate health breakdown
+      const critical = inventory.filter(i => (i.reorder_point || 0) > i.qty_on_hand && (i.days_of_supply || 0) <= 2).length;
+      const warning = inventory.filter(i => (i.reorder_point || 0) > i.qty_on_hand && (i.days_of_supply || 0) > 2).length;
+      const healthy = inventory.filter(i => (i.reorder_point || 0) <= i.qty_on_hand).length;
+      const total = inventory.length;
+
+      // Render stats
+      const statsEl = document.getElementById('health-stats');
+      statsEl.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:8px; height:8px; border-radius:50%; background:#FF453A;"></div>
+          <div style="flex:1; color:#AEAEB2;">Critical</div>
+          <div style="color:#FFF; font-weight:600;">${critical}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:8px; height:8px; border-radius:50%; background:#FF9F0A;"></div>
+          <div style="flex:1; color:#AEAEB2;">Warning</div>
+          <div style="color:#FFF; font-weight:600;">${warning}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:8px; height:8px; border-radius:50%; background:#30D158;"></div>
+          <div style="flex:1; color:#AEAEB2;">Healthy</div>
+          <div style="color:#FFF; font-weight:600;">${healthy}</div>
+        </div>
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #2C2C2E;">
+          <div style="display:flex; justify-content:space-between;">
+            <div style="color:#8E8E93; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Total Items</div>
+            <div style="color:#FFF; font-weight:700; font-size:16px;">${total}</div>
           </div>
         </div>
-      `).join('');
+      `;
+
+      // Render donut chart
+      const canvas = document.getElementById('inventory-health-chart');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+
+      // Destroy existing chart if it exists
+      if (inventoryHealthChartInstance) {
+        inventoryHealthChartInstance.destroy();
+      }
+
+      inventoryHealthChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical', 'Warning', 'Healthy'],
+          datasets: [{
+            data: [critical, warning, healthy],
+            backgroundColor: ['#FF453A', '#FF9F0A', '#30D158'],
+            borderWidth: 0,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#2C2C2E',
+              bodyColor: '#FFF',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 12,
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
     }
+
 
     function renderAlerts(inventory) {
       const el = document.getElementById('alerts-detail');

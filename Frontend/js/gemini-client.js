@@ -238,7 +238,7 @@ const GEMINI_TOOLS = [
 function getSystemPrompt() {
     const today = new Date().toISOString().split('T')[0];
 
-    return `You are RestaurantIQ AI, an intelligent assistant for restaurant managers. You help with inventory management, sales analytics, and forecasting.
+    return `You are Stockd AI, an intelligent assistant for restaurant managers. You help with inventory management, sales analytics, and forecasting.
 
 CURRENT DATE: ${today}
 
