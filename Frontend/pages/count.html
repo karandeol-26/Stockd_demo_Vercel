@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestaurantIQ — Physical Count</title>
-  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/app-light.css">
 </head>
+
 <body>
 
   <nav class="topnav">
     <div class="topnav-brand">
       <div class="topnav-icon">R</div>
-      <div><div class="topnav-title">RestaurantIQ</div><div class="topnav-sub">Physical Count</div></div>
+      <div>
+        <div class="topnav-title">RestaurantIQ</div>
+        <div class="topnav-sub">Physical Count</div>
+      </div>
     </div>
     <div class="topnav-links">
       <button class="topnav-link" onclick="go('dashboard')">Dashboard</button>
@@ -53,8 +58,7 @@
 
       <div class="form-group">
         <label class="form-label">Actual Counted Quantity</label>
-        <input type="number" class="form-input mono" id="qty-input"
-               placeholder="0" min="0" step="0.01">
+        <input type="number" class="form-input mono" id="qty-input" placeholder="0" min="0" step="0.01">
       </div>
 
       <button class="btn btn-primary btn-block btn-lg" id="submit-btn" onclick="submitCount()">
@@ -65,11 +69,18 @@
     </div>
 
     <!-- Recent counts -->
-    <div class="section-header"><h2>Recent Counts</h2></div>
+    <div class="section-header">
+      <h2>Recent Counts</h2>
+    </div>
     <div class="card" style="padding:0;overflow:hidden;">
       <table class="data-table">
         <thead>
-          <tr><th>Date</th><th>Ingredient</th><th>Delta</th><th>Note</th></tr>
+          <tr>
+            <th>Date</th>
+            <th>Ingredient</th>
+            <th>Delta</th>
+            <th>Note</th>
+          </tr>
         </thead>
         <tbody id="counts-tbody"></tbody>
       </table>
@@ -79,6 +90,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
   <script src="../js/supabase-client.js"></script>
   <script>
     function go(page) { window.location.href = page + '.html'; }
@@ -183,4 +196,5 @@
     }
   </script>
 </body>
+
 </html>

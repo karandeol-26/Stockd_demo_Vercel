@@ -1,63 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestaurantIQ — Sign In</title>
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/app-light.css">
   <style>
     .login-wrapper {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background:
-        radial-gradient(ellipse at 20% 50%, rgba(0,212,170,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(0,136,255,0.03) 0%, transparent 50%),
-        var(--bg-base);
+      background: linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
     }
+
     .login-card {
-      width: 380px;
+      width: 400px;
       max-width: 90vw;
     }
+
     .login-logo {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
     }
-    .login-logo .topnav-icon {
-      width: 52px; height: 52px;
-      font-size: 24px;
+
+    .login-logo-icon {
+      width: 56px;
+      height: 56px;
       border-radius: 14px;
-      margin-bottom: 14px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
     }
+
+    .login-logo-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .login-logo-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
     .login-divider {
-      display: flex; align-items: center; gap: 12px;
-      color: var(--text-faint); font-size: 11px; margin: 18px 0;
-      text-transform: uppercase; letter-spacing: 0.1em;
-    }
-    .login-divider::before, .login-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .error-text {
-      color: var(--red-soft);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--text-muted);
       font-size: 12px;
+      margin: 20px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .error-text {
+      color: var(--red);
+      font-size: 13px;
       margin-top: 8px;
       display: none;
+      text-align: center;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .login-footer a {
+      color: var(--text-muted);
     }
   </style>
 </head>
+
 <body>
 
   <div class="login-wrapper">
     <div class="login-card">
       <div class="login-logo">
-        <div class="topnav-icon flex-center">R</div>
-        <div style="font-size:22px;font-weight:700;color:var(--text-primary);">RestaurantIQ</div>
-        <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;">
-          Inventory & Forecasting
-        </div>
+        <div class="login-logo-icon">R</div>
+        <div class="login-logo-text">RestaurantIQ</div>
+        <div class="login-logo-sub">Inventory & AI Forecasting</div>
       </div>
 
       <div class="card">
@@ -83,13 +127,14 @@
         </button>
       </div>
 
-      <div style="text-align:center;margin-top:20px;color:var(--text-faint);font-size:11px;">
-        UGAHacks 11 · Powered by Supabase
+      <div class="login-footer">
+        <a href="landing.html">← Back to home</a> · UGAHacks 11
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script>
     // If already logged in, go to app
@@ -134,11 +179,11 @@
       } else {
         showError('');
         document.querySelector('.card').innerHTML = `
-          <div style="text-align:center;padding:20px;">
-            <div style="font-size:36px;margin-bottom:12px;">✉️</div>
-            <h3 style="color:var(--text-primary);margin-bottom:8px;">Check your email</h3>
-            <p style="color:var(--text-muted);font-size:13px;">
-              We sent a confirmation link to <strong>${email}</strong>.<br>
+          <div style="text-align:center;padding:32px 16px;">
+            <div style="font-size:48px;margin-bottom:16px;">✉️</div>
+            <h3 style="color:var(--text-primary);font-size:20px;font-weight:600;margin-bottom:8px;">Check your email</h3>
+            <p style="color:var(--text-muted);font-size:14px;line-height:1.6;">
+              We sent a confirmation link to <strong style="color:var(--text-primary)">${email}</strong>.<br>
               Click it to activate your account, then sign in.
             </p>
           </div>
@@ -161,4 +206,5 @@
     }
   </script>
 </body>
+
 </html>

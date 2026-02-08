@@ -3,13 +3,10 @@
 // Load AFTER the Supabase CDN script
 // ═══════════════════════════════════════════════
 
-// ─── PASTE YOUR KEYS HERE ────────────────────
-const SUPABASE_URL  = '';
-const SUPABASE_ANON = "";
-// ──────────────────────────────────────────────
-
-if (!SUPABASE_ANON) {
-  console.error('⚠️  Set SUPABASE_ANON in js/supabase-client.js');
+// Keys come from js/config.js (auto-generated from .env)
+// Run: npm run config
+if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON === 'undefined') {
+  console.error('⚠️  config.js not loaded. Run: npm run config');
 }
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);

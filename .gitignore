@@ -1,4 +1,4 @@
 supabase/.temp
 node_modules/
 .env
-.env
+Frontend/js/config.js

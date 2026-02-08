@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --runInBand --verbose",
-    "test:watch": "jest --runInBand --watch"
+    "test:watch": "jest --runInBand --watch",
+    "config": "node scripts/generate-config.js",
+    "start": "npx serve Frontend"
   },
   "repository": {
     "type": "git",

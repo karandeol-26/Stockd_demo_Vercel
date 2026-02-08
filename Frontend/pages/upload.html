@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestaurantIQ — Upload Daily Report</title>
-  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/app-light.css">
 </head>
+
 <body>
 
   <nav class="topnav">
     <div class="topnav-brand">
       <div class="topnav-icon">R</div>
-      <div><div class="topnav-title">RestaurantIQ</div><div class="topnav-sub">Daily Upload</div></div>
+      <div>
+        <div class="topnav-title">RestaurantIQ</div>
+        <div class="topnav-sub">Daily Upload</div>
+      </div>
     </div>
     <div class="topnav-links">
       <button class="topnav-link" onclick="go('dashboard')">Dashboard</button>
@@ -48,7 +53,9 @@
       </button>
 
       <div style="margin-top:14px;">
-        <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
         <div class="progress-label" id="progress-label"></div>
       </div>
 
@@ -78,6 +85,9 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/config.js"></script>
   <script src="../js/supabase-client.js"></script>
   <script src="../js/csv-parser.js"></script>
   <script>
@@ -114,7 +124,7 @@
             <div class="stat-row"><span class="label">Rows</span><span class="value">${s.aggregatedRows}</span></div>
             <div class="stat-row"><span class="label">Date(s)</span><span class="value">${s.startDate}${s.startDate !== s.endDate ? ' → ' + s.endDate : ''}</span></div>
             <div class="stat-row"><span class="label">Items</span><span class="value">${s.uniqueItems} menu items</span></div>
-            <div class="stat-row"><span class="label">Sales</span><span class="value">$${s.totalSales.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
+            <div class="stat-row"><span class="label">Sales</span><span class="value">$${s.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
           </div>
         `;
 
@@ -188,4 +198,5 @@
     }
   </script>
 </body>
+
 </html>

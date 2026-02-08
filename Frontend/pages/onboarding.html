@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestaurantIQ — Setup</title>
-  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/app-light.css">
 </head>
+
 <body>
 
   <!-- Top Nav (minimal for onboarding) -->
@@ -37,8 +39,7 @@
         <div class="step-title">Select Your Toast Export CSV</div>
       </div>
 
-      <div class="upload-zone" id="upload-zone"
-           onclick="document.getElementById('csv-input').click()">
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('csv-input').click()">
         <input type="file" id="csv-input" accept=".csv">
         <div class="icon">📄</div>
         <div class="label">Drop your CSV here or <a>browse files</a></div>
@@ -81,6 +82,7 @@
   <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
   <script src="../js/supabase-client.js"></script>
   <script src="../js/csv-parser.js"></script>
   <script>
@@ -141,7 +143,7 @@
           <div class="stat-row"><span class="label">Categories</span><span class="value">${s.uniqueCategories}</span></div>
           <div class="stat-row"><span class="label">Date range</span><span class="value">${s.startDate} → ${s.endDate} (${s.totalDays} days)</span></div>
           <div class="stat-row"><span class="label">Total units sold</span><span class="value">${Math.round(s.totalQty).toLocaleString()}</span></div>
-          <div class="stat-row"><span class="label">Total net sales</span><span class="value">$${s.totalSales.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
+          <div class="stat-row"><span class="label">Total net sales</span><span class="value">$${s.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
         </div>
       `;
 
@@ -182,7 +184,7 @@
         document.getElementById('step2-num').textContent = '✓';
 
         const msg = `🎉 Setup complete! ${closeData.dates_processed} dates processed, ` +
-                    `${closeData.total_consume_txns} consumption transactions. Redirecting...`;
+          `${closeData.total_consume_txns} consumption transactions. Redirecting...`;
         setStatus(msg, 'success');
 
         setTimeout(() => window.location.href = 'dashboard.html', 3000);
@@ -207,4 +209,5 @@
     }
   </script>
 </body>
+
 </html>
