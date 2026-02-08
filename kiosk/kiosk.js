@@ -18,9 +18,10 @@ let cart        = [];   // { id, name, category, qty }
 let activeCat   = 'all';
 
 // ─── DOM refs ────────────────────────────
-const $grid     = document.getElementById('menu-grid');
-const $catBar   = document.getElementById('cat-bar');
-const $search   = document.getElementById('search');
+const $catSel   = document.getElementById('cat-select');
+const $itemSel  = document.getElementById('item-select');
+const $addQty   = document.getElementById('add-qty');
+const $btnAdd   = document.getElementById('btn-add');
 const $cartBody = document.getElementById('cart-body');
 const $cartEmpty= document.getElementById('cart-empty');
 const $btnOrder = document.getElementById('btn-order');
@@ -69,51 +70,33 @@ async function loadMenu() {
     });
 
   categories = [...new Set(menuItems.map(i => i.category))].filter(Boolean);
-  renderCategoryTabs();
-  renderMenu();
+  renderCategoryDropdown();
+  renderItemDropdown();
 }
 
-// ─── Render Categories ───────────────────
-function renderCategoryTabs() {
-  $catBar.innerHTML = `<button class="cat-btn active" data-cat="all">All</button>` +
-    categories.map(c => `<button class="cat-btn" data-cat="${c}">${c}</button>`).join('');
-
-  $catBar.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeCat = btn.dataset.cat;
-      $catBar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderMenu();
-    });
-  });
+// ─── Render Category Dropdown ────────────
+function renderCategoryDropdown() {
+  $catSel.innerHTML = '<option value="all">All Categories</option>' +
+    categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 }
 
-// ─── Render Menu Grid ────────────────────
-function renderMenu() {
-  const q = $search.value.toLowerCase().trim();
+// ─── Render Item Dropdown ────────────────
+function renderItemDropdown() {
   const filtered = menuItems.filter(i => {
     if (activeCat !== 'all' && i.category !== activeCat) return false;
-    if (q && !i.name.toLowerCase().includes(q)) return false;
     return true;
   });
 
-  if (!filtered.length) {
-    $grid.innerHTML = '<div class="loading">No items found.</div>';
-    return;
-  }
+  $itemSel.innerHTML = '<option value="">— pick a menu item —</option>' +
+    filtered.map(i => {
+      const label = i.sizeLabel
+        ? `${i.name} (${i.sizeLabel === 'S' ? 'Small' : i.sizeLabel === 'M' ? 'Medium' : i.sizeLabel === 'L' ? 'Large' : i.sizeLabel})`
+        : i.name;
+      return `<option value="${i.id}" data-name="${esc(i.name)}" data-cat="${esc(i.category || '')}">${esc(label)}</option>`;
+    }).join('');
 
-  $grid.innerHTML = filtered.map(i => `
-    <div class="menu-card" data-id="${i.id}" data-name="${esc(i.name)}" data-cat="${esc(i.category || '')}">
-      <div class="card-cat">${esc(i.category || 'Menu')}</div>
-      <div class="card-name">${esc(i.name)}</div>
-      ${i.sizeLabel ? `<span class="card-size">${i.sizeLabel === 'S' ? 'Small' : i.sizeLabel === 'M' ? 'Medium' : i.sizeLabel === 'L' ? 'Large' : i.sizeLabel}</span>` : ''}
-      <div class="card-add">+</div>
-    </div>
-  `).join('');
-
-  $grid.querySelectorAll('.menu-card').forEach(card => {
-    card.addEventListener('click', () => addToCart(card.dataset.id, card.dataset.name, card.dataset.cat));
-  });
+  $itemSel.value = '';
+  $btnAdd.disabled = true;
 }
 
 // ─── Cart Logic ──────────────────────────
@@ -261,7 +244,29 @@ async function placeOrder() {
 
 // ─── Events ──────────────────────────────
 function bindEvents() {
-  $search.addEventListener('input', () => renderMenu());
+  $catSel.addEventListener('change', () => {
+    activeCat = $catSel.value;
+    renderItemDropdown();
+  });
+  $itemSel.addEventListener('change', () => {
+    $btnAdd.disabled = !$itemSel.value;
+  });
+  $btnAdd.addEventListener('click', () => {
+    const opt = $itemSel.selectedOptions[0];
+    if (!opt || !opt.value) return;
+    const qty = Math.max(1, parseInt($addQty.value) || 1);
+    const existing = cart.find(c => c.id === opt.value);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      cart.push({ id: opt.value, name: opt.dataset.name, category: opt.dataset.cat, qty });
+    }
+    updateCart();
+    $itemSel.value = '';
+    $addQty.value = 1;
+    $btnAdd.disabled = true;
+    toast('Added to order', 'success');
+  });
   $btnClear.addEventListener('click', clearCart);
   $btnOrder.addEventListener('click', placeOrder);
   $btnNew.addEventListener('click', () => {
