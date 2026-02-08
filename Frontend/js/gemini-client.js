@@ -39,7 +39,7 @@ const GEMINI_TOOLS = [
                     properties: {
                         p_days: {
                             type: "integer",
-                            description: "Number of days to look back. Default is 30."
+                            description: "Number of days to look back. Default is 30. Use 3650 for 'all time'."
                         }
                     }
                 }
@@ -97,6 +97,42 @@ const GEMINI_TOOLS = [
                         }
                     },
                     required: ["item_name"]
+                }
+            },
+            {
+                name: "get_top_selling_items",
+                description: "Get top selling items based on quantity sold. Use for questions like 'most popular', 'best sellers', 'most liked', or 'favorites'.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        limit: {
+                            type: "integer",
+                            description: "Number of items to return (default 5)"
+                        },
+                        category: {
+                            type: "string",
+                            description: "Optional category filter (e.g. 'Pizza', 'Beverage')"
+                        },
+                        sort: {
+                            type: "string",
+                            description: "Sort order: 'desc' (default) for most sold, 'asc' for least sold.",
+                            enum: ["asc", "desc"]
+                        }
+                    }
+                }
+            },
+            {
+                name: "get_menu_items_by_ingredient",
+                description: "Find menu items that contain a specific ingredient. Use when asked 'What dishes use X?' or 'items with X'.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        ingredient_name: {
+                            type: "string",
+                            description: "Name of the ingredient"
+                        }
+                    },
+                    required: ["ingredient_name"]
                 }
             },
 
@@ -223,6 +259,12 @@ GUIDELINES:
 7. When asked "what's running low", use get_inventory_snapshot and filter for critical/reorder_soon status.
 8. For "how did we do", use get_daily_analytics or get_revenue_trend.
 9. For future income/revenue questions, use predict_revenue. Explain that it is an ESTIMATE based on recent trends.
+10. For "most liked" or "popular" items, use get_top_selling_items. Interpret "most liked" as "most sold".
+11. For "most disliked" or "least popular", use get_top_selling_items with sort='asc'. Interpret "disliked" as "least sold".
+12. For "how many X can I make" (production capacity), follow this sequence: A) Search menu item to get ID. B) Call get_bom_for_item. C) Call get_inventory_snapshot to check stock of those ingredients. D) Calculate the limiting factor and answer.
+13. For "how to boost sales" or business advice, PROACTIVELY call get_top_selling_items (best & worst) and get_revenue_trend. Analyze the data to suggest promoting high-margin items or bundling low-performing ones.
+14. For "what uses X" or "dishes with X", use get_menu_items_by_ingredient.
+15. For "average items per order", use get_revenue_trend. Look for 'summary.avg_items_per_order' in the response. If user asks for "whole data" or "all time", set p_days to 3650.
 
 RESPONSE FORMAT:
 - Use bullet points for lists
@@ -351,7 +393,113 @@ class GeminiChat {
                 return await sb.rpc('get_forecast', args).then(r => r.data || r.error);
 
             case 'get_revenue_trend':
-                return await sb.rpc('get_revenue_trend', args).then(r => r.data || r.error);
+                const trendData = await sb.rpc('get_revenue_trend', args).then(r => r.data || []);
+                if (!Array.isArray(trendData)) return trendData; // Return error or object if not array
+
+                // Enhance with Item Counts
+                const days = args.p_days || 30;
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - days);
+
+                const { data: sales } = await sb.from('sales_line_items')
+                    .select('business_date, qty')
+                    .gte('business_date', startDate.toISOString().split('T')[0]);
+
+                if (sales) {
+                    const qtyMap = {};
+                    sales.forEach(s => {
+                        const d = s.business_date.split('T')[0]; // Normalize
+                        if (!qtyMap[d]) qtyMap[d] = 0;
+                        qtyMap[d] += Number(s.qty || 0);
+                    });
+
+                    let totalTrendItems = 0;
+                    let totalTrendOrders = 0;
+
+                    trendData.forEach(day => {
+                        // Normalize date from RPC if needed
+                        const d = day.business_date.split('T')[0];
+                        const qty = qtyMap[d] || 0;
+
+                        day.total_items_sold = qty;
+                        day.avg_items_per_order = day.order_count > 0 ? (qty / day.order_count).toFixed(2) : 0;
+
+                        totalTrendItems += qty;
+                        totalTrendOrders += day.order_count;
+                    });
+
+                    // Automatic Fallback: If < 5 orders OR 0 items (suspicious), try 3650 days (All Time)
+                    const suspicious = totalTrendOrders < 5 || totalTrendItems === 0;
+                    console.log(`[DEBUG] Orders: ${totalTrendOrders}, Items: ${totalTrendItems}, Suspicious: ${suspicious}`);
+
+                    if (suspicious && (!args.p_days || args.p_days < 3650)) {
+                        console.log("Stats low, retrying with 3650 days...");
+
+                        // Recursive call (simulated) or just re-fetch
+                        const fallbackDays = 3650;
+                        const fallbackArgs = { ...args, p_days: fallbackDays };
+
+                        // 1. Re-fetch RPC
+                        const fallbackTrend = await sb.rpc('get_revenue_trend', fallbackArgs).then(r => r.data || []);
+                        console.log(`[DEBUG] Fallback Trend Length: ${fallbackTrend.length}`);
+
+                        if (Array.isArray(fallbackTrend) && fallbackTrend.length > 0) {
+                            // 2. Re-fetch Sales
+                            const fallbackStart = new Date();
+                            fallbackStart.setDate(fallbackStart.getDate() - fallbackDays);
+
+                            const { data: fallbackSales, error: fbError } = await sb.from('sales_line_items')
+                                .select('business_date, qty')
+                                .gte('business_date', fallbackStart.toISOString().split('T')[0]);
+
+                            console.log(`[DEBUG] Fallback Sales: ${fallbackSales?.length}, Error: ${fbError?.message}`);
+
+                            if (fallbackSales) {
+                                const fbQtyMap = {};
+                                fallbackSales.forEach(s => {
+                                    const d = s.business_date.split('T')[0];
+                                    if (!fbQtyMap[d]) fbQtyMap[d] = 0;
+                                    fbQtyMap[d] += Number(s.qty || 0);
+                                });
+
+                                let fbItems = 0;
+                                let fbOrders = 0;
+
+                                fallbackTrend.forEach(day => {
+                                    const d = day.business_date.split('T')[0];
+                                    const qty = fbQtyMap[d] || 0;
+                                    fbItems += qty;
+                                    fbOrders += day.order_count;
+                                });
+
+                                // Return FALLBACK summary
+                                return {
+                                    trend: fallbackTrend, // Return COMPLETE trend
+                                    summary: {
+                                        total_orders: fbOrders,
+                                        total_items: fbItems,
+                                        avg_items_per_order: fbOrders > 0 ? (fbItems / fbOrders).toFixed(2) : 0,
+                                        period_days: fallbackDays,
+                                        note: `All-time (3650d): ${fbOrders} orders, ${fbItems} items. Sales Rows: ${fallbackSales?.length || 0}.`
+                                    }
+                                };
+                            }
+                        }
+                    }
+
+                    // Return object with summary
+                    return {
+                        trend: trendData,
+                        summary: {
+                            total_orders: totalTrendOrders,
+                            total_items: totalTrendItems,
+                            avg_items_per_order: totalTrendOrders > 0 ? (totalTrendItems / totalTrendOrders).toFixed(2) : 0,
+                            period_days: days
+                        }
+                    };
+                }
+
+                return { trend: trendData, summary: null };
 
             case 'get_daily_analytics':
                 return await sb.rpc('get_daily_analytics', args).then(r => r.data || r.error);
@@ -455,6 +603,104 @@ class GeminiChat {
 
             case 'upsert_bom_entry':
                 return await sb.rpc('upsert_bom_entry', args).then(r => r.data || r.error);
+
+            case 'get_top_selling_items':
+                // Fetch sales with menu item details
+                const saleItems = await fetchAllGeneric('sales_line_items', 'menu_item_id, qty, net_sales, menu_items(name, category)');
+
+                // Aggregate
+                const itemMap = {};
+                saleItems.forEach(r => {
+                    const id = r.menu_item_id;
+                    if (!itemMap[id]) {
+                        itemMap[id] = {
+                            name: r.menu_items?.name || 'Unknown',
+                            category: r.menu_items?.category || '',
+                            total_qty: 0,
+                            total_sales: 0
+                        };
+                    }
+                    itemMap[id].total_qty += r.qty;
+                    itemMap[id].total_sales += r.net_sales;
+                });
+
+                // Convert to array
+                let topItems = Object.values(itemMap);
+
+                // Filter out test items before sorting
+                topItems = topItems.filter(i =>
+                    !i.name.startsWith('__') &&
+                    !(i.category && i.category.toLowerCase().includes('test'))
+                );
+
+                if (args.sort === 'asc') {
+                    topItems.sort((a, b) => a.total_qty - b.total_qty);
+                } else {
+                    topItems.sort((a, b) => b.total_qty - a.total_qty);
+                }
+
+                // Collect available categories for hint
+                const availableCategories = [...new Set(topItems.map(i => i.category).filter(Boolean))];
+
+                // Filter (optional)
+                if (args.category) {
+                    const catLower = args.category.toLowerCase();
+                    // Fuzzy match: check if category *includes* the search term OR is included IN the search term
+                    const filtered = topItems.filter(i =>
+                        i.category && (
+                            i.category.toLowerCase().includes(catLower) ||
+                            catLower.includes(i.category.toLowerCase())
+                        )
+                    );
+
+                    if (filtered.length === 0) {
+                        return {
+                            info: `No items found matching category '${args.category}'.`,
+                            available_categories: availableCategories.slice(0, 10)
+                        };
+                    }
+                    topItems = filtered;
+                }
+
+                return topItems.slice(0, args.limit || 5);
+
+            case 'get_menu_items_by_ingredient':
+                // 1. Search ingredient
+                const { data: ings } = await sb.from('ingredients').select('id, name').ilike('name', `%${args.ingredient_name}%`).limit(1);
+
+                if (!ings || ings.length === 0) {
+                    return { error: `Ingredient '${args.ingredient_name}' not found.` };
+                }
+
+                const ingId = ings[0].id;
+                const ingName = ings[0].name;
+
+                // 2. Query join table (assuming 'menu_item_ingredients')
+                const { data: links, error: linkError } = await sb
+                    .from('menu_item_ingredients')
+                    .select('menu_item_id')
+                    .eq('ingredient_id', ingId);
+
+                if (linkError) {
+                    return { error: "Database error: Could not access recipe data (menu_item_ingredients table missing?)." };
+                }
+
+                if (!links || links.length === 0) {
+                    return { info: `No menu items found using ${ingName}.` };
+                }
+
+                const itemIds = links.map(l => l.menu_item_id);
+
+                // 3. Get item details
+                const { data: items } = await sb
+                    .from('menu_items')
+                    .select('name, category')
+                    .in('id', itemIds);
+
+                return {
+                    ingredient: ingName,
+                    used_in: items.map(i => `${i.name} (${i.category})`)
+                };
 
             default:
                 return { error: `Unknown function: ${name}` };

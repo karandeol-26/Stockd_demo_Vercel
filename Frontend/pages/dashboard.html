@@ -197,23 +197,30 @@
      * using .range(), concatenating results until a batch returns fewer
      * than 1000 rows. This bypasses Supabase's default 1000-row limit.
      */
-    async function fetchAllPaginated(tableName, selectColumns) {
+    function getLookbackDate(days) {
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      return d.toISOString().split('T')[0];
+    }
+
+    async function fetchAllPaginated(tableName, selectColumns, filterFn) {
       const PAGE_SIZE = 1000;
       let allData = [];
       let from = 0;
 
       while (true) {
-        const { data, error } = await sb
-          .from(tableName)
-          .select(selectColumns)
-          .range(from, from + PAGE_SIZE - 1);
+        let query = sb.from(tableName).select(selectColumns);
+
+        // Apply filter if provided
+        if (filterFn) query = filterFn(query);
+
+        const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
 
         if (error) throw error;
 
         const batch = data || [];
         allData = allData.concat(batch);
 
-        // If we got fewer than PAGE_SIZE rows, we've reached the end
         if (batch.length < PAGE_SIZE) break;
 
         from += PAGE_SIZE;
@@ -231,7 +238,9 @@
     }
 
     async function fetchSalesTrend() {
-      const data = await fetchAllPaginated('sales_line_items', 'business_date, qty, net_sales');
+      // 90 day lookback for trend
+      const dateStr = getLookbackDate(90);
+      const data = await fetchAllPaginated('sales_line_items', 'business_date, qty, net_sales', q => q.gte('business_date', dateStr));
 
       const byDate = {};
       data.forEach(r => {
@@ -246,7 +255,9 @@
     }
 
     async function fetchTopSellers() {
-      const data = await fetchAllPaginated('sales_line_items', 'menu_item_id, qty, net_sales, menu_items(name, category)');
+      // 90 day lookback for top sellers
+      const dateStr = getLookbackDate(90);
+      const data = await fetchAllPaginated('sales_line_items', 'menu_item_id, qty, net_sales, menu_items(name, category)', q => q.gte('business_date', dateStr));
 
       const byItem = {};
       data.forEach(r => {
@@ -259,6 +270,12 @@
             totalSales: 0
           };
         }
+
+        // Skip test items
+        if (byItem[id].name.startsWith('__') || (byItem[id].category && byItem[id].category.toLowerCase().includes('test'))) {
+          return;
+        }
+
         byItem[id].totalQty += r.qty;
         byItem[id].totalSales += r.net_sales;
       });
@@ -269,12 +286,18 @@
     }
 
     async function fetchCategories() {
-      const data = await fetchAllPaginated('sales_line_items', 'qty, net_sales, menu_items(category)');
+      // 90 day lookback for categories
+      const dateStr = getLookbackDate(90);
+      const data = await fetchAllPaginated('sales_line_items', 'qty, net_sales, menu_items(category)', q => q.gte('business_date', dateStr));
 
       const byCat = {};
       data.forEach(r => {
         const cat = r.menu_items?.category || 'Other';
         if (!byCat[cat]) byCat[cat] = { name: cat, sales: 0, qty: 0 };
+
+        // Skip test categories
+        if (cat.toLowerCase().includes('test')) return;
+
         byCat[cat].sales += r.net_sales;
         byCat[cat].qty += r.qty;
       });
