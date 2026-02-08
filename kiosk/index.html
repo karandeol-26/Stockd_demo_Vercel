@@ -31,19 +31,28 @@
     <!-- Left: Menu Side -->
     <section class="menu-side">
 
-      <!-- Category Tabs -->
-      <nav class="cat-bar" id="cat-bar">
-        <button class="cat-btn active" data-cat="all">All</button>
-      </nav>
+      <!-- Item Selector -->
+      <div class="selector-panel">
+        <h2 class="selector-title">Add Items</h2>
 
-      <!-- Search -->
-      <div class="search-wrap">
-        <input type="text" class="search-input" id="search" placeholder="Search menu…" autocomplete="off">
-      </div>
+        <div class="selector-row">
+          <label class="selector-label" for="cat-select">Category</label>
+          <select class="selector-dropdown" id="cat-select">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
 
-      <!-- Grid -->
-      <div class="menu-grid" id="menu-grid">
-        <div class="loading">Loading menu…</div>
+        <div class="selector-row">
+          <label class="selector-label" for="item-select">Menu Item</label>
+          <select class="selector-dropdown" id="item-select">
+            <option value="">— pick a menu item —</option>
+          </select>
+        </div>
+
+        <div class="selector-row selector-actions">
+          <input type="number" class="qty-input" id="add-qty" min="1" value="1">
+          <button class="btn-add" id="btn-add" disabled>Add to Order</button>
+        </div>
       </div>
     </section>
 
