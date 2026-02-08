@@ -229,7 +229,6 @@ This project was created for UGAHacks 11. All rights reserved.
 ## 🔗 Links
 
 - 🌐 [Devpost Submission](https://devpost.com/software/stockd)
-- 📧 Contact: [Your Email]
 
 ---
 
