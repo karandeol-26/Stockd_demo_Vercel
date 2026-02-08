@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tony's Pizza — Order Kiosk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kiosk.css">
+</head>
+<body>
+
+  <!-- ─── Header ─────────────────────────── -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-emoji">🍕</span>
+      <div>
+        <div class="header-title">Tony's Pizza</div>
+        <div class="header-sub">Self-Order Kiosk</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge" id="badge-items">0 items</span>
+      <span class="badge badge-accent" id="badge-total">$0.00</span>
+    </div>
+  </header>
+
+  <!-- ─── Main ───────────────────────────── -->
+  <main class="layout">
+
+    <!-- Left: Menu Side -->
+    <section class="menu-side">
+
+      <!-- Category Tabs -->
+      <nav class="cat-bar" id="cat-bar">
+        <button class="cat-btn active" data-cat="all">All</button>
+      </nav>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="search" placeholder="Search menu…" autocomplete="off">
+      </div>
+
+      <!-- Grid -->
+      <div class="menu-grid" id="menu-grid">
+        <div class="loading">Loading menu…</div>
+      </div>
+    </section>
+
+    <!-- Right: Cart Side -->
+    <aside class="cart-side">
+      <div class="cart-head">
+        <h2>Your Order</h2>
+        <button class="link-btn" id="btn-clear">Clear</button>
+      </div>
+
+      <div class="cart-body" id="cart-body">
+        <div class="cart-empty" id="cart-empty">
+          <div style="font-size:48px;margin-bottom:12px;">🛒</div>
+          <p>Tap items on the left to start your order</p>
+        </div>
+      </div>
+
+      <div class="cart-foot">
+        <div class="summary-row"><span>Subtotal</span><span id="s-sub">$0.00</span></div>
+        <div class="summary-row"><span>Tax (8%)</span><span id="s-tax">$0.00</span></div>
+        <div class="summary-row total-row"><span>Total</span><span id="s-total">$0.00</span></div>
+
+        <div class="option-row">
+          <select id="dining-opt">
+            <option value="Dine In">🍽 Dine In</option>
+            <option value="Take Out">📦 Take Out</option>
+            <option value="Delivery">🚗 Delivery</option>
+          </select>
+          <div class="guest-wrap">
+            <label for="guests">Guests</label>
+            <input type="number" id="guests" min="1" value="1">
+          </div>
+        </div>
+
+        <button class="btn-order" id="btn-order" disabled>Place Order</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ─── Confirmation Overlay ───────────── -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="modal-check">✓</div>
+      <h2>Order Placed!</h2>
+      <p id="modal-msg"></p>
+      <div class="modal-detail" id="modal-detail"></div>
+      <button class="btn-order" id="btn-new">Start New Order</button>
+    </div>
+  </div>
+
+  <!-- ─── Toast ──────────────────────────── -->
+  <div class="toast-box" id="toast-box"></div>
+
+  <!-- ─── Scripts ────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="kiosk.js"></script>
+</body>
+</html>
