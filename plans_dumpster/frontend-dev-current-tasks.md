@@ -506,6 +506,53 @@ const { data } = await supabase.rpc('get_revenue_trend', { p_days: 30 });
 
 ---
 
+## NEW: ElevenLabs Text-to-Speech Module (Module 9)
+
+**Status**: COMPLETE — Module ready to use
+
+A simple Node.js module for text-to-speech using ElevenLabs API. No server required.
+
+### Module Location
+- `Elevenlabs/elevenlabs.js` — Main module
+- `Elevenlabs/example.js` — Usage examples
+- `Elevenlabs/README.md` — Documentation
+
+### API
+
+```javascript
+const elevenlabs = require('./Elevenlabs/elevenlabs');
+
+// Get audio as Buffer
+const audioBuffer = await elevenlabs.textToSpeech("Hello world!");
+
+// Save to file
+await elevenlabs.textToSpeechFile("Hello world!", "speech.mp3");
+
+// Custom voice
+const audio = await elevenlabs.textToSpeech("Hello", {
+    voiceId: "21m00Tcm4TlvDq8ikWAM"  // Rachel (default)
+});
+```
+
+### Configuration
+- API key in `.env`: `ELEVENLABS_API_KEY=sk_your_key_here`
+- Get API key from https://elevenlabs.io
+
+### Test
+```bash
+node Elevenlabs/example.js
+```
+
+### Available Functions
+- `textToSpeech(text, options)` → `Promise<Buffer>`
+- `textToSpeechFile(text, outputPath, options)` → `Promise<void>`
+
+### Exports
+- `DEFAULT_VOICE_ID` — "21m00Tcm4TlvDq8ikWAM" (Rachel)
+- `DEFAULT_MODEL_ID` — "eleven_monolingual_v1"
+
+---
+
 ## NEW: Admin CRUD RPCs (Module 7)
 
 Backend RPCs with full validation for managing menu items, ingredients, and BOM recipes.

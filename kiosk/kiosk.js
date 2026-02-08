@@ -29,9 +29,14 @@ const $btnClear = document.getElementById('btn-clear');
 const $overlay  = document.getElementById('overlay');
 const $btnNew   = document.getElementById('btn-new');
 const $toastBox = document.getElementById('toast-box');
+const $menuStats= document.getElementById('menu-stats');
+const $qtyMinus = document.getElementById('qty-minus');
+const $qtyPlus  = document.getElementById('qty-plus');
+const $clock    = document.getElementById('header-clock');
 
 // ─── Init ────────────────────────────────
 (async () => {
+  startClock();
   await signIn();
   await loadMenu();
   bindEvents();
@@ -56,7 +61,6 @@ async function loadMenu() {
     .order('name');
 
   if (error || !data) {
-    $grid.innerHTML = '<div class="loading">Failed to load menu.</div>';
     toast('Menu load failed', 'error');
     return;
   }
@@ -72,6 +76,7 @@ async function loadMenu() {
   categories = [...new Set(menuItems.map(i => i.category))].filter(Boolean);
   renderCategoryDropdown();
   renderItemDropdown();
+  $menuStats.textContent = `${menuItems.length} items across ${categories.length} categories`;
 }
 
 // ─── Render Category Dropdown ────────────
@@ -155,12 +160,17 @@ function updateCart() {
           <span class="qty-val">${item.qty}</span>
           <button class="qty-btn" data-id="${item.id}" data-d="1">+</button>
         </div>
+        <button class="cart-item-remove" data-id="${item.id}" title="Remove">×</button>
       `;
       div.querySelectorAll('.qty-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           changeQty(btn.dataset.id, parseInt(btn.dataset.d));
         });
+      });
+      div.querySelector('.cart-item-remove').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeFromCart(item.id);
       });
       $cartBody.appendChild(div);
     });
@@ -251,6 +261,14 @@ function bindEvents() {
   $itemSel.addEventListener('change', () => {
     $btnAdd.disabled = !$itemSel.value;
   });
+  $qtyMinus.addEventListener('click', () => {
+    const v = parseInt($addQty.value) || 1;
+    $addQty.value = Math.max(1, v - 1);
+  });
+  $qtyPlus.addEventListener('click', () => {
+    const v = parseInt($addQty.value) || 1;
+    $addQty.value = v + 1;
+  });
   $btnAdd.addEventListener('click', () => {
     const opt = $itemSel.selectedOptions[0];
     if (!opt || !opt.value) return;
@@ -292,4 +310,13 @@ function toast(msg, type = 'error') {
   el.textContent = msg;
   $toastBox.appendChild(el);
   setTimeout(() => el.remove(), 4000);
+}
+
+function startClock() {
+  function tick() {
+    const now = new Date();
+    $clock.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+  tick();
+  setInterval(tick, 30000);
 }

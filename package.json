@@ -7,7 +7,8 @@
     "test": "jest --runInBand --verbose",
     "test:watch": "jest --runInBand --watch",
     "config": "node scripts/generate-config.js",
-    "start": "npx serve Frontend"
+    "start": "npx serve Frontend",
+    "start:backend": "node Backend/server.js"
   },
   "repository": {
     "type": "git",
@@ -22,8 +23,11 @@
   },
   "homepage": "https://github.com/panjabandharyana/ugahacks11#readme",
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.34.0",
     "@supabase/supabase-js": "^2.95.3",
+    "cors": "^2.8.6",
     "dotenv": "^17.2.4",
+    "express": "^5.2.1",
     "papaparse": "^5.5.3",
     "pdfjs-dist": "^5.4.624"
   },
