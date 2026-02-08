@@ -105,7 +105,7 @@ Traditional inventory systems cost thousands per month or are too complex for da
 ┌─────────────┐         ┌──────────────┐         ┌─────────────┐
 │  Frontend   │ ◄─────► │   Supabase   │ ◄─────► │   Gemini    │
 │  (Vanilla   │         │  (PostgreSQL │         │     API     │
-│     JS)     │         │   + Realtime)│         │ (Forecasting)│
+│     JS)     │         │   + Realtime)│         │(Forecasting)│
 └─────────────┘         └──────────────┘         └─────────────┘
 ```
 
