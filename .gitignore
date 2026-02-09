@@ -3,4 +3,5 @@ node_modules/
 .env
 Frontend/js/config.js
 Frontend/js/env.js
-.vercel
+
+

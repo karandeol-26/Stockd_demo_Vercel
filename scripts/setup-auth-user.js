@@ -11,8 +11,8 @@ const supabase = createClient(
 );
 
 async function main() {
-  const email = 'demo@tonys.pizza';
-  const password = 'TonysPizza2026!';
+  const email = 'demo@user.pizza';
+  const password = 'admin';
 
   // Check if already exists
   const { data: { users } } = await supabase.auth.admin.listUsers();
