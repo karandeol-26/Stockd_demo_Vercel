@@ -161,7 +161,7 @@
 
   function addMessage(role, text, isLoading = false, isError = false) {
     const container = document.getElementById('ai-messages');
-    const id = 'msg-' + Date.now();
+    const id = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
     const msg = document.createElement('div');
     msg.id = id;
